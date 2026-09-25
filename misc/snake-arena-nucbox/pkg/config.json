@@ -1,0 +1,42 @@
+{
+  "grid": 12,
+  "max_moves": 400,
+  "players": [
+    {
+      "id": "jev",
+      "label": "Jev",
+      "color": "#4ade80",
+      "tag": "OpenCode Zen",
+      "enabled": true,
+      "protocol": "systemone",
+      "url": "https://opencode.ai/zen/v1/systemone",
+      "model": "jev-1.13-free",
+      "via_tunnel": false,
+      "instructions": "You are playing Snake. The state's 'options' field rates each direction: pick a SAFE direction, preferring ones that move toward the food. Never pick ILLEGAL or BLOCKED directions."
+    },
+    {
+      "id": "laya",
+      "label": "Laya",
+      "color": "#f5a623",
+      "tag": "nucbox",
+      "enabled": true,
+      "protocol": "systemone",
+      "url": "https://nucbox-m7-1.taila7272b.ts.net:9479/api/predict",
+      "model": "laya-rl-agent",
+      "via_tunnel": true,
+      "instructions": "You are playing Snake. The state's 'options' field rates each direction: pick a SAFE direction, preferring ones that move toward the food. Never pick ILLEGAL or BLOCKED directions."
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen",
+      "color": "#a78bfa",
+      "tag": "LM Studio",
+      "enabled": true,
+      "protocol": "openai",
+      "url": "https://nucbox-m7-1.taila7272b.ts.net:9480/v1/chat/completions",
+      "model": "jev-style-qwen3.5-2b-decision-v2",
+      "via_tunnel": true,
+      "instructions": "You are playing Snake on a 12x12 grid. Reply with exactly one word, no explanation: up, down, left, or right."
+    }
+  ]
+}

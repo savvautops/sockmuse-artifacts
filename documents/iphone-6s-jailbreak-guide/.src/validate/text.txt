@@ -1,0 +1,402 @@
+NANO NODES
+
+FIELD GUIDE 01
+
+IPHONE 6S · IOS 15.8.8 · A9
+
+Jailbreak an
+iPhone 6s
+without a PC after
+every reboot
+The practical path for turning an old iPhone into a
+rootless, remotely managed node: TrollRestore
+→ TrollStore → Dopamine → Sileo →
+OpenSSH.
+
+Recommended route
+TrollRestore once on a computer, then Dopamine ondevice whenever the phone reboots.
+iPhone 6s hardware. Photo source: The Motley
+Fool.
+
+METHOD
+
+COMPUTER
+
+RESEARCH DATE
+
+Rootless, semi-untethered
+
+Windows first; macOS/Linux also
+work
+
+24 September 2026
+
+Read before touching the phone. Jailbreaking weakens parts of iOS's security model and can break banking,
+work-management, streaming, or anti-cheat apps. Use a device you own, back it up, and keep sensitive
+accounts off a repurposed node.
+
+nano-nodes.com · Build small. Run local. Own.
+
+1/7
+
+01
+
+Why this is the optimal route
+
+For an iPhone 6s already updated to iOS 15.8.8, Dopamine is the better daily
+driver than palera1n because it can be re-applied from the phone itself after a
+reboot.
+
+Dopamine
+
+palera1n
+
+RECOMMENDED
+
+FALLBACK
+
+Rootless filesystem layout under
+/var/jb
+
+Uses the unpatchable checkm8 bootROM
+path
+
+Semi-untethered: tap Jailbreak again after
+a reboot
+
+Requires a computer and DFU after reboot
+
+Installs Sileo and a Procursus bootstrap
+
+Rootful mode is legacy-oriented and costs
+storage
+
+Useful when Dopamine will not land
+
+No DFU dance for routine reboots
+
+Rootless does not mean “no root.” It means jailbreak files live outside Apple's sealed system volume,
+mainly under /var/jb . You can still obtain a UID 0 shell and run daemons inside the jailbreak environment;
+you simply do not rewrite Apple's sealed root filesystem.
+
+The chain, in plain English
+PC + USB
+one time
+
+→
+
+TrollRestore
+inject helper
+
+→
+
+TrollStore
+install IPA
+
+→
+
+Dopamine
+jailbreak
+
+→
+
+Sileo
+packages
+
+Compatibility checkpoint
+A9 support for the patched iOS 15.8.7 branch arrived in Dopamine's 2.5 beta line through the DarkSword
+exploit. Current compatibility listings include the iPhone 6s on iOS 15.8.8. Because releases move, download
+the newest official build whose notes still list A9/iOS 15.8.8 support rather than following a mirror's version
+number.
+Check before starting: official Dopamine releases · AppleDB compatibility
+
+iPhone 6s jailbreak guide
+
+2/7
+
+Prepare once, recover easily
+
+02
+
+Do the boring checks first. They are what separate a five-minute retry from a
+lost afternoon.
+
+1
+
+3
+
+5
+
+Confirm the target.
+Settings → General → About should show
+iOS 15.8.8. This guide is specifically for an
+iPhone 6s / 6s Plus with the A9 chip.
+Know the Apple Account password.
+You need it to turn off Find My temporarily.
+Do not begin if Activation Lock recovery
+would be a problem.
+Windows prerequisite.
+Install the current Apple device driver stack /
+iTunes so the computer can see the phone.
+Reconnect once and confirm the phone
+appears.
+
+2
+
+4
+
+6
+
+Make an encrypted local backup.
+Use Finder on macOS or iTunes / Apple
+Devices on Windows. Confirm the backup
+completed before continuing.
+Use a dependable cable and port.
+Charge above 50%, unlock the phone, tap
+Trust, and enter the device passcode when
+asked.
+Temporarily disable Find My.
+Settings → [your name] → Find My → Find
+My iPhone → Off. Re-enable it after
+TrollStore is working.
+
+Security trade-off: iOS 15.8.8 is current for this method, not current iOS. A repurposed node should not carry
+your primary Apple Account, banking apps, password vault, private photos, or work mobile-device-management
+profile.
+
+Download rule
+Use project-owned release pages only. Avoid “one-click jailbreak” sites, repacked IPAs, configuration profiles,
+and ad-gated download buttons. If a guide tells you to disable antivirus permanently or enter an Apple
+password into a third-party utility, stop.
+Primary procedure: maintained iOS Guide for TrollRestore + Dopamine
+
+Preparation
+
+3/7
+
+03
+
+Install TrollStore with TrollRestore
+
+This is the only stage that needs a computer. TrollRestore restores a
+deliberately modified backup that places the TrollStore helper inside a
+removable Apple system app.
+1
+
+Download TrollRestore
+Open the official TrollRestore releases page. On Windows, download TrollRestore.exe . On
+Apple silicon macOS, choose the arm64 archive; on Intel macOS, choose amd64; on Linux, choose
+the Linux archive.
+
+2
+
+Connect and trust the phone
+Unlock the iPhone, connect it by USB, accept Trust This Computer, and leave the phone
+connected. Find My must already be off.
+
+3
+
+Run TrollRestore
+On Windows, double-click the executable. If Windows SmartScreen appears, verify the file came from
+the JJTech0130 GitHub release page before allowing it. Do not substitute a mirror.
+
+4
+
+Choose Tips
+When prompted for the system app to overwrite, enter Tips . The phone may look idle while the
+restore runs. Do not unplug it. The phone will reboot when the helper has been injected.
+
+5
+
+Install TrollStore
+After reboot, unlock the phone and open Tips. Tap Install TrollStore. The interface will respring and
+TrollStore should appear on the Home Screen.
+
+6
+
+Add persistence, then restore Find My
+Open TrollStore → Settings → Install Persistence Helper → Tips. Once TrollStore opens normally,
+turn Find My back on.
+
+If Tips is missing: reinstall Tips from the App Store, reboot, and run TrollRestore again. If the computer
+cannot see the phone, unlock it, re-accept Trust, try another cable/USB port, and reopen iTunes or Apple
+Devices.
+
+TrollRestore → TrollStore
+
+4/7
+
+04
+
+Install Dopamine and jailbreak
+
+TrollStore keeps the jailbreak app installed. Dopamine applies the jailbreak
+and creates the rootless environment under /var/jb .
+1
+
+Download the official IPA
+On the iPhone, open Dopamine Releases and download the current IPA that explicitly supports A9
+and iOS 15.8.8. A9 support began in the 2.5 beta line; a newer compatible release is preferable to an
+old stable build.
+
+2
+
+Install through TrollStore
+Open TrollStore → + → choose the downloaded Dopamine .ipa in Files → Install. Dopamine
+should appear on the Home Screen without seven-day re-signing.
+
+3
+
+Start from a clean reboot
+Reboot the phone, unlock it, then open Dopamine immediately. Select Sileo as the package manager
+and create a strong sudo password when prompted. Save it in a password manager; it is not your
+Apple Account password.
+
+4
+
+Run the exploit
+Tap Jailbreak. The device will respring or userspace-reboot. When it returns, look for Sileo. If
+Dopamine closes or the phone restarts before completion, reboot and try again; DarkSword can fail a
+race and the official release notes call this out.
+
+5
+
+Finish the bootstrap
+Open Sileo, refresh sources, and install all essential updates. The maintained guide then installs or
+updates ElleKit and PreferenceLoader, followed by a SpringBoard restart. Reboot and re-jailbreak if
+tweak injection does not initialize cleanly.
+
+Success looks like this: Dopamine reports jailbroken, Sileo opens, packages refresh without fatal errors,
+and /var/jb exists. Stop here before adding tweaks; confirm the base stays stable first.
+
+Dopamine + Sileo
+
+5/7
+
+05
+
+Harden SSH before making it a node
+
+Remote shell access is useful and dangerous. Install it only after the jailbreak
+is stable, and never expose port 22 directly to the public internet.
+
+On the iPhone
+1. In Sileo, install OpenSSH Server and an ondevice terminal such as NewTerm.
+2. Use the strong sudo password created during
+Dopamine setup. If your bootstrap still has a
+default password, change it immediately.
+3. Find the phone's LAN or private-overlay IP. Keep
+SSH limited to a trusted LAN or private network
+such as Tailscale.
+
+Do not: port-forward TCP 22 from the router, reuse
+an Apple Account password, or paste private keys
+into random tweak prompts.
+
+From your computer
+ssh mobile@PHONE_IP
+sudo -i
+id -u
+# expected: 0
+
+Prefer SSH keys after the first successful login. Keep
+the private key on your computer and add only the
+public key to the phone.
+
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+# append your public key only
+chmod 600 ~/.ssh/authorized_keys
+
+Baseline verification
+id -u
+
+test -d /var/jb
+
+returns 0 after sudo -i
+
+exits successfully
+
+dpkg --print-architecture
+
+uname -a
+
+shows an iPhone arm64 package architecture
+
+identifies the iOS/Darwin host
+
+About “root.” UID 0 is real, but Apple's sealed system volume remains protected. Build for the rootless prefix
+( /var/jb ) and install rootless packages marked for iphoneos-arm64 . Old rootful tweaks that hard-code
+/Library or /usr can break the environment.
+
+Secure remote access
+
+6/7
+
+06
+
+Operate, recover, then build the
+node
+
+After every full reboot
+
+When something fails
+
+1. The phone boots in normal, non-jailbroken mode.
+
+Dopamine closes
+
+2. Open Dopamine.
+
+Reboot and retry. The release notes acknowledge
+occasional DarkSword failures.
+
+3. Tap Jailbreak.
+4. Wait for the respring/userspace reboot.
+5. Confirm Sileo and SSH again.
+This is the convenience advantage over palera1n:
+routine recovery does not require DFU mode or a
+computer.
+
+Boot loop fear
+
+Force a normal reboot; a semi-untethered jailbreak
+should return to stock mode.
+A tweak causes crashes
+
+Use Dopamine's safe-mode or disable-tweakinjection option, then remove the last package.
+SSH disappears
+
+Re-apply Dopamine first; jailbreak daemons are not
+active in stock mode.
+
+Do not auto-update blindly
+A later iOS update can remove or break the jailbreak even though checkm8 remains available as a hardware
+fallback. Before installing any future update, check the Dopamine release notes for the exact device, chip, and
+build. The trade-off is real: delaying updates preserves jailbreak compatibility but also delays security patches.
+
+Next Nano Nodes phase: OpenClaw-iOS
+Once the phone survives a reboot/re-jailbreak cycle and SSH is reliable, the next experiment is a
+rootless .deb under /var/jb . The OpenClaw-iOS project targets iOS 15 arm64 with
+Dopamine/Procursus, bundles Node.js, and defines a launchd service. Treat it as experimental: its own
+project notes have tracked active end-to-end work, so validate the current release status before relying
+on it.
+
+Sources and downloads
+1. opa334/Dopamine — official releases
+
+4. iOS Guide — installing Dopamine via TrollRestore
+
+2. JJTech0130/TrollRestore — official releases
+
+5. AppleDB — Dopamine compatibility reference
+
+3. opa334/TrollStore — official releases
+Compatibility and instructions checked 24 September 2026. Projects change quickly; re-check release notes before downloading.
+Jailbreak only a device you own and can restore.
+
+Recovery + next build
+
+7/7
+
+

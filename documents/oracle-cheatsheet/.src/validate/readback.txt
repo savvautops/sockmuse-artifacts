@@ -1,0 +1,833 @@
+ORACLE CLOUD INFRASTRUCTURE
+
+Practical VPS cheatsheet
+
+A LWAY S F R E E C O M P U T E , W I T H O U T T H E C L O U D F O G
+
+From empty tenancy
+to useful Linux server
+
+A field guide to Oracle Cloud Infrastructure (OCI): what the pieces mean,
+which free VM to choose, how to connect, how traffic reaches it, and how to
+avoid surprise costs or preventable lockouts.
+
+BEST FREE TARGET
+
+RECOMMENDED OS
+
+ACCESS MODEL
+
+A1
+
+Ubuntu
+
+SSH
+
+Ampere Arm flexible VM.
+Allocate from the monthly
+Always Free compute pool.
+
+Familiar tooling and a broad
+package ecosystem. Verify
+every container image
+supports arm64.
+
+Use a key pair, not a server
+password. The private key
+stays on your own device.
+
+The free tier is a limit, not a magic shield. Confirm the resource is marked Always Free eligible, use
+only the home region for free compute, and create budget alerts before experimenting.
+
+What this guide gives you
+1. The OCI mental model
+
+2
+
+2. Your full Always Free VM inventory
+
+3
+
+3. Your VM compared with Sock's sandbox
+
+4
+
+4. A safe first-VM recipe
+
+5
+
+5. SSH and first-hour setup
+
+6
+
+6. Networking and firewall logic
+
+7
+
+7. Daily operations and troubleshooting
+
+8
+
+8. Cost, backup, and security guardrails
+
+9
+
+9. Glossary and official sources
+
+10
+
+Prepared 24 Sep 2026
+
+1 / 10
+
+01 / MENTAL MODEL
+
+Know what contains what
+
+OCI is a set of nested boundaries
+Think from the outside inward. Most console confusion comes from viewing the right service in the wrong
+region or compartment.
+
+Tenancy
+
+VCN
+Private network
+
+Region
+
+›
+
+Your cloud account
+
+›
+
+›
+
+Geographic area
+
+Subnet
+Address range
+
+›
+
+VNIC
+VM network card
+
+Compartment
+Resource folder + policy scope
+
+›
+
+Identity and organization
+
+Compute and storage
+
+Tenancy: the top-level account and billing
+boundary.
+
+Instance: a virtual machine.
+
+Identity domain: users, sign-in, groups, and
+authentication.
+Compartment: a logical container used for
+permissions, quotas, budgets, and finding
+resources.
+
+Instance
+Your VM
+
+Shape: CPU architecture, OCPU count, and
+memory profile.
+Image: operating system template, such as
+Ubuntu or Oracle Linux.
+Boot volume: persistent disk holding the
+operating system and files.
+
+OCID: Oracle Cloud Identifier, a long unique ID
+attached to each resource.
+
+Location
+
+Networking
+
+Home region: the account's anchor region.
+Always Free compute must be created here.
+
+VCN: your software-defined private network.
+
+Availability domain (AD): an isolated datacenter group within a region.
+
+Internet gateway: a route target that lets a
+public subnet reach the internet.
+
+Fault domain: a hardware grouping inside an
+AD.
+
+NSG: Network Security Group; firewall rules for
+selected VNICs.
+
+Subnet: a slice of the VCN address space.
+
+Fast orientation: check the region selector, then the compartment selector, before assuming a resource
+is missing.
+
+Oracle Cloud Infrastructure
+
+2 / 10
+
+02 / ALWAYS FREE
+
+How many VMs you actually get
+
+You can run up to four free VMs
+As of September 2026, an Always Free tenancy can hold up to four compute instances: as many as two
+Ampere A1 Flex VMs sharing one Arm resource pool, plus two AMD E2.1.Micro VMs.
+A1 FLEX ALLOWANCE
+
+E2 MICRO ALLOWANCE
+
+MAXIMUM COUNT
+
+2 VMs
+
+2 VMs
+
+4 VMs
+
+They share 2 OCPUs and 12 GB
+RAM across the tenancy.
+
+Each has 1 AMD OCPU, 2
+vCPUs, and 1 GB RAM.
+
+Only if the shared 200 GB disk
+pool can hold all boot volumes.
+
+The four slots are not identical
+Free
+allowance
+
+CPU
+
+RAM
+
+Best use
+
+Up to 2 × A1
+Flex
+
+Ampere Altra Arm; 2 OCPUs total
+shared
+
+12 GB total
+shared
+
+Main app server, Docker, agents,
+Node/Python workloads
+
+2 × E2.1.Micro
+
+AMD x86; 1 OCPU = 2 vCPUs each via
+hyperthreading
+
+1 GB each
+
+Light bot, status page, proxy, tiny
+sidecar
+
+How the A1 pool splits: one A1 can use the full 2 OCPUs / 12 GB, as your planned VM does. If you
+want two A1 VMs, they must divide that same pool, for example 1 OCPU / 6 GB each. The pool was
+reduced from 4 OCPUs / 24 GB in June 2026.
+
+Storage determines how many fit
+All boot and block volumes share 200 GB total. OCI boot volumes have a 47 GB minimum. Four minimumsize boot volumes need about 188 GB. Your 100 GB boot volume leaves 100 GB, enough for two more 47 GB
+boot volumes, so the practical maximum with the current disk choice is three VMs total, not four.
+
+Other free infrastructure
+10 TB outbound bandwidth each month
+Public IPv4 is free while attached to a
+running instance
+200 GB combined boot/block storage
+
+Always Free inventory - September 2026
+
+Two important caveats
+Arm capacity can be scarce: retry after Out
+of host capacity , or try another available
+region.
+Oracle may reclaim Always Free instances it
+classifies as idle.
+
+3 / 10
+
+03 / MACHINE COMPARISON
+
+Your VM versus Sock's sandbox
+
+Your Oracle VM is the bigger Linux box
+nelson-vm-01: provisioning on 24 Sep 2026
+
+This compares the Linux sandbox that runs Sock's tools with the Oracle VM you configured. It does not
+compare against the Meta GPU infrastructure that runs the Muse model itself.
+Sock's sandbox
+
+nelson-vm-01
+
+CPU
+
+2 shared vCPUs
+
+2 dedicated OCPUs
+
+Processor
+
+AMD EPYC 9D25
+
+Ampere Altra
+
+Architecture
+
+x86_64
+
+Arm64 / aarch64
+
+Memory
+
+7.7 GB RAM
+
+12 GB RAM
+
+Disk
+
+7.5 GB
+
+100 GB boot volume
+
+Operating
+system
+
+Ubuntu 24.04
+
+Canonical Ubuntu 24.04 Minimal
+
+CPU scheduling
+
+Shared slices of a larger host
+
+Full physical Arm cores; no
+hyperthreading
+
+Role
+
+Temporary tool-running workspace
+
+Your persistent API-and-agent server
+
+Your exact deployment plan
+Name: nelson-vm-01
+
+Compute: 2 OCPUs / 12 GB RAM
+
+Shape: VM.Standard.A1.Flex
+
+Storage: 100 GB boot volume
+
+Region: ca-montreal-1
+
+Address: reserved public IPv4
+
+Image: Canonical Ubuntu 24.04 Minimal
+aarch64
+
+Ingress: TCP 22, 80, and 443
+
+Where your VM wins: 55% more RAM, over 13 times the disk, and dedicated physical CPU cores. It is
+built to stay online and host your own services.
+
+Where the sandbox differs: x86_64 has broader compatibility with old or x86-only binaries. On the A1
+VM, prefer packages and container images that publish linux/arm64 builds.
+
+The “brain” is separate from the hardware. The VM runs the installed agent, command-line
+interfaces, orchestration, storage, and networking. API keys let those tools call remote large language
+models; the model inference usually runs at the API provider, not on the two Arm cores.
+
+Machine profile
+
+4 / 10
+
+04 / CREATE THE VM
+
+A safe starter configuration
+
+Build one simple, recoverable server
+1
+
+Name and placement
+Open Compute › Instances › Create instance. Use nelson-vm-01 . Confirm the compartment and
+the Montreal home region ( ca-montreal-1 ).
+
+2
+
+Choose the image
+Select Canonical Ubuntu 24.04 Minimal aarch64 for A1. If you choose Oracle Linux, remember the
+SSH user changes from ubuntu to opc .
+
+3
+
+Choose the shape
+Select VM.Standard.A1.Flex , then set 2 OCPUs / 12 GB RAM. Stop if the page does not show the
+shape as Always Free eligible.
+
+4
+
+Create the network path
+Use a VCN with a public subnet, internet gateway, and route to 0.0.0.0/0 . Assign a public IPv4
+address if you need direct SSH from home.
+
+5
+
+Use an SSH public key
+Upload an existing .pub key or let OCI generate a key pair. Download the private key once and store it
+securely. Oracle does not retain a recoverable copy of a console-generated private key.
+
+6
+
+Keep storage modest
+Use the selected 100 GB boot volume. It leaves 100 GB in the Always Free storage pool; every
+additional instance needs at least 47 GB.
+
+7
+
+Review before launch
+Confirm the Always Free label, architecture, OCPU/RAM, boot size, public IP choice, and estimated
+cost. Then create the instance and wait for Running.
+
+Open only what you use
+
+Do not do this
+
+TCP 22: SSH, ideally from your own public
+IP
+
+Do not paste a private SSH key into cloudinit.
+
+TCP 80: HTTP, if serving a public website
+
+Do not enable password SSH for
+convenience.
+
+TCP 443: HTTPS, if serving a public website
+
+Do not expose databases or admin panels to
+0.0.0.0/0 .
+
+Arm compatibility check: before deploying a container, look for a multi-architecture image or explicit
+linux/arm64 support. Run uname -m ; A1 should report aarch64 .
+
+Launch checklist
+
+5 / 10
+
+05 / FIRST CONNECTION
+
+SSH, patch, verify
+
+Your first ten minutes on the VM
+1. Lock down the key locally
+chmod 600 ~/keys/oracle-vm.key
+
+2. Connect to the public IP
+# Ubuntu image
+ssh -i ~/keys/oracle-vm.key ubuntu@203.0.113.10
+# Oracle Linux image
+ssh -i ~/keys/oracle-vm.key opc@203.0.113.10
+Replace the example address with the instance's real public IP. On first connection, verify the host-key fingerprint through a
+trusted channel before accepting it.
+
+3. Identify and update the system
+uname -m
+# A1 normally reports aarch64
+cat /etc/os-release
+sudo apt update && sudo apt upgrade -y
+# Ubuntu
+# Oracle Linux: sudo dnf upgrade -y
+
+4. Check resources
+nproc
+free -h
+lsblk
+df -h /
+ip -brief address
+
+# logical processors visible to Linux
+# memory
+# disks and mount points
+# root filesystem usage
+# interfaces and addresses
+
+5. Create a memorable local SSH alias
+# ~/.ssh/config on your own computer
+Host oracle-free
+HostName 203.0.113.10
+User ubuntu
+IdentityFile ~/keys/oracle-vm.key
+IdentitiesOnly yes
+# Then connect with:
+ssh oracle-free
+
+Never lose the private key. Keep an encrypted backup. Anyone who gets it can attempt to access the
+server; Oracle's documentation says it cannot recover a console-generated private key for you.
+File transfer: use scp local-file oracle-free:~/ to upload, or scp -r oracle-free:~/folder ./ to
+download.
+
+Shell access
+
+6 / 10
+
+06 / NETWORKING
+
+Four gates must agree
+
+A public IP alone does not open a port
+1. Address
+Public IPv4 on VNIC
+
+2. Route
+
+›
+
+3. OCI rule
+
+›
+
+0.0.0.0/0 to internet
+
+NSG or security list
+
+4. OS rule
+
+›
+
+UFW / firewalld +
+
+gateway
+
+service
+
+Inbound traffic works only when every relevant layer permits it and the application is actually listening.
+Layer
+
+Question
+
+Where to check
+
+Public
+address
+
+Does the primary VNIC have a public IP?
+
+Instance › Networking › Attached
+VNICs
+
+Route table
+
+Does the subnet route internet traffic to an internet
+gateway?
+
+VCN › Subnets › Route table
+
+Cloud firewall
+
+Does an ingress rule allow the protocol, port, and source?
+
+NSG or subnet security list
+
+Host firewall
+
+Does Linux permit the port?
+
+sudo ufw status or firewalld
+
+Application
+
+Is something listening on the correct interface?
+
+sudo ss -lntup
+
+Security list
+
+Network Security Group
+
+Rules apply to all VNICs in the associated
+subnet. Simple, but broad.
+
+Rules apply only to selected VNICs. Oracle
+recommends NSGs for separating application
+security from subnet design.
+
+Source CIDR: choose the narrowest safe value
+Source
+
+Meaning
+
+Use
+
+your.public.ip/32
+
+One IPv4 address
+
+Best for SSH when your address is stable
+
+0.0.0.0/0
+
+Every IPv4 address
+
+Normal for public HTTP/HTTPS; risky for admin ports
+
+VCN CIDR
+
+Private network only
+
+Internal services between OCI resources
+
+Two-firewall trap: adding an OCI ingress rule does not update Ubuntu's UFW or Oracle Linux's
+firewalld. Check both. Also bind public services to 0.0.0.0 or the VM's private address, not only
+127.0.0.1 .
+
+Network path
+
+7 / 10
+
+07 / OPERATIONS
+
+The commands worth remembering
+
+Run it like a small Linux server
+System health
+uptime
+free -h
+df -h
+du -sh ./* | sort -h
+top
+sudo ss -lntup
+
+Updates and reboot
+sudo apt update
+sudo apt upgrade -y
+sudo reboot
+# Oracle Linux
+sudo dnf upgrade -y
+
+Services and logs
+systemctl --failed
+sudo systemctl status nginx
+sudo systemctl restart nginx
+sudo journalctl -u nginx -n 100
+sudo journalctl -u nginx -f
+
+Docker basics
+docker ps
+docker compose ps
+docker compose logs -f
+docker compose pull
+docker compose up -d
+docker system df
+
+When SSH does not connect, check in this order
+1. Lifecycle: the instance is Running, not Stopped, Terminated, or Provisioning.
+2. Address: use the current public IP shown on the instance details page.
+3. Network: public subnet, internet-gateway route, and TCP 22 ingress are present.
+4. Source: if port 22 is limited to a /32 , your current home public IP still matches it.
+5. Username: ubuntu for Ubuntu; opc for Oracle Linux and Red Hat-compatible images.
+6. Key: the private key matches the public key installed at creation, and local permissions are restrictive.
+7. Syntax: use ssh -i /path/key user@public-ip .
+Useful SSH diagnostics:
+ssh -vvv -i ~/keys/oracle-vm.key ubuntu@203.0.113.10
+# timeout: usually route/firewall/address
+# permission denied (publickey): usually user/key mismatch
+
+When an app works locally but not remotely
+curl -I http://127.0.0.1:PORT
+sudo ss -lntup | grep PORT
+sudo ufw status verbose
+# Then check the OCI NSG/security-list ingress rule for the same port.
+
+Daily command card
+
+8 / 10
+
+08 / GUARDRAILS
+
+Free, secure, recoverable
+
+Treat free infrastructure as replaceable
+Cost controls
+
+Access controls
+
+□
+
+Create a small monthly budget with email
+alerts.
+
+□
+
+Keep multifactor authentication enabled for
+the cloud account.
+
+□
+
+Check Cost Analysis after creating
+resources.
+
+□
+
+Use SSH keys; keep password login and
+root login disabled.
+
+□
+
+Verify every shape and service is Always
+Free eligible.
+
+□
+
+Restrict SSH ingress to your IP or a private
+overlay network.
+
+□
+
+Delete unused paid resources, not only
+their parent VM.
+
+□
+
+Patch the OS and applications regularly.
+
+□
+
+□
+
+Remember: a budget is an alerting tool, not
+a hard spending cap.
+
+Never store private keys, API keys, or
+tokens in a public repo.
+
+Budget setup
+1
+
+Open Billing & Cost Management › Budgets and create a budget scoped to the root or project
+compartment.
+
+2
+
+Add actual-spend alert rules at low thresholds appropriate for a free-tier account.
+
+3
+
+Send alerts to an address you actively monitor, then verify the alert rule exists.
+
+Idle reclamation changes the design. Oracle may reclaim an Always Free compute instance it
+classifies as idle. Do not manufacture fake load. Instead, keep important code in source control, back up
+stateful data, and make the server reproducible so a replacement is routine.
+
+Minimum backup pattern
+What
+
+Where
+
+Cadence
+
+Application code
+
+Private Git repository
+
+Every meaningful change
+
+Configuration
+
+Encrypted backup; secrets separate
+
+After configuration changes
+
+Database/data
+
+Encrypted off-instance destination
+
+Based on acceptable data loss
+
+Boot volume
+
+OCI boot-volume backup
+
+Before risky upgrades or migrations
+
+Recovery test: a backup is not proven until you can restore it. Keep a short rebuild note: image, shape,
+ports, DNS, packages, services, mount points, and restore command.
+
+Cost, security, recovery
+
+9 / 10
+
+09 / REFERENCE
+
+Glossary + official sources
+
+The one-page memory card
+Provisioning words
+
+Networking words
+
+Tenancy: your whole OCI account.
+
+VCN: virtual cloud network.
+
+Region: geographic deployment area.
+
+Subnet: address range inside a VCN.
+
+Compartment: logical resource and policy
+container.
+
+VNIC: virtual network interface card.
+
+Shape: VM CPU architecture and resource
+profile.
+Image: operating system template.
+
+NSG: firewall rules for selected VNICs.
+Security list: firewall rules for a subnet.
+CIDR: compact notation for an IP range.
+
+OCID: globally unique Oracle resource ID.
+
+Recommended starter: one Ubuntu LTS Arm VM on VM.Standard.A1.Flex , 2 OCPUs, 12 GB RAM,
+100 GB boot volume, reserved public IP, key-based SSH, TCP 22, and public TCP 80/443 for web traffic.
+
+Official Oracle references
+1. Always Free Resources: limits, home-region rule, capacity guidance, storage, and idle reclamation.
+https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm
+2. Access and Manage a Linux Compute Instance: SSH connection walkthrough.
+https://docs.oracle.com/en/learn/access-oci-linux-instance/index.html
+3. Troubleshooting the SSH Connection: public subnet, port 22, usernames, and key checks.
+https://docs.Oracle.com/en-us/iaas/Content/Compute/Tasks/troubleshooting-ssh-connection.htm
+4. Managing Key Pairs on Linux Instances: key behavior and private-key handling.
+https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/managingkeypairs.htm
+5. Security Rules: security lists versus Network Security Groups.
+https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securityrules.htm
+6. Creating a Budget: budget scope and alert configuration.
+https://docs.oracle.com/en-us/iaas/Content/Billing/Tasks/create-budget.htm
+7. Compute Instance Security: SSH, patching, host firewall, and hardening guidance.
+https://docs.oracle.com/en/solutions/oci-security-checklist/compute-security1.html
+8. Boot-volume backups: point-in-time backup behavior and CLI reference.
+https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/bv/boot-volume-backup.html
+
+Accessed 24 Sep 2026. Oracle can change service limits, labels, and console navigation; verify the Always Free page and the
+creation-screen estimate before provisioning.
+
+Keep this page with your rebuild notes
+
+10 / 10
+
+

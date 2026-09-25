@@ -1,0 +1,21 @@
+OK: required commands found
+OK: input files found
+OK: prepared validation output directory: /home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate
+size=174086 bytes
+Pages:           9
+Page size:       594.96 x 841.92 pts (A4)
+OK: PDF integrity and metadata look valid
+imgs=0 data-uri-srcs=0
+css-urls=0 css-data-uris=0
+OK: HTML image references are embedded
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-1.png 117287 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-2.png 168299 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-3.png 243728 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-4.png 226514 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-5.png 185353 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-6.png 221677 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-7.png 228505 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-8.png 302051 bytes
+/home/hatch/workspace/your_files/why-llms-are-black-boxes/.src/validate/page-9.png 251960 bytes
+OK: rendered 9 validation PNG(s) from the PDF
+PASS: mechanical PDF validation complete; inspect rendered PNGs before returning the artifact.

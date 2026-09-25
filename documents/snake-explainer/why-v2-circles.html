@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why v2 spins in circles</title>
+<style>
+  * { box-sizing: border-box; }
+  body { background: #0b0e14; color: #d6deeb; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+         margin: 0; padding: 24px 16px 64px; line-height: 1.55; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; color: #fff; }
+  .sub { color: #7f8ea3; margin-bottom: 28px; font-size: 14px; }
+  .panel { background: #11151f; border: 1px solid #1e2532; border-radius: 12px;
+           padding: 20px; margin-bottom: 20px; }
+  .panel h2 { margin: 0 0 12px; font-size: 17px; color: #fff; }
+  .panel h2 .n { color: #39d353; }
+  .k { color: #39d353; } .r { color: #ff5f56; } .y { color: #e3b341; } .b { color: #6cb6ff; }
+  .dim { color: #7f8ea3; }
+  /* pipeline diagram */
+  .pipe { display: flex; align-items: stretch; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .node { background: #0b0e14; border: 1px solid #2a3342; border-radius: 8px; padding: 10px 12px;
+          font-size: 13px; flex: 1 1 0; min-width: 120px; text-align: center; }
+  .node b { display: block; color: #fff; margin-bottom: 2px; font-size: 13px; }
+  .arr { align-self: center; color: #39d353; font-size: 18px; }
+  .wipe { border: 1px dashed #ff5f56; border-radius: 8px; padding: 10px 12px; text-align: center;
+          color: #ff5f56; font-size: 13px; margin-top: 10px; }
+  .bar { height: 10px; background: #1e2532; border-radius: 5px; overflow: hidden; margin: 8px 0 4px; }
+  .bar > div { height: 100%; width: 0.6%; background: #39d353; }
+  pre.prompt { background: #0b0e14; border: 1px solid #2a3342; border-radius: 8px; padding: 14px;
+               font-size: 13px; white-space: pre-wrap; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+  .gridbox { background: #0b0e14; border: 1px solid #2a3342; border-radius: 8px; padding: 12px;
+             display: flex; justify-content: center; }
+  canvas { max-width: 100%; }
+  .stat { display: inline-block; background: #0b0e14; border: 1px solid #2a3342; border-radius: 8px;
+          padding: 8px 14px; margin: 4px 6px 4px 0; font-size: 14px; }
+  .stat b { color: #fff; }
+  .fix { border-left: 3px solid #39d353; padding-left: 14px; margin: 12px 0; }
+  .fix b { color: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Why v2 spins in circles</h1>
+  <div class="sub">A visual explanation, built from your actual game data &middot; Qwen v2, game 2, 2026-09-24</div>
+
+  <div class="panel">
+    <h2><span class="n">1.</span> It's not running out of context</h2>
+    <p>Every move is one tiny request. Here's how much of v2's 32k context a move actually uses:</p>
+    <div class="bar"><div></div></div>
+    <div class="dim" style="font-size:13px">~200 tokens used &middot; 32,768 available &middot; 0.6% full</div>
+    <p>The problem is the <b>opposite</b> of running out of context: <span class="y">nothing is carried between moves at all.</span></p>
+    <div class="pipe">
+      <div class="node"><b>board state</b><span class="dim">head, food, body</span></div><div class="arr">&rarr;</div>
+      <div class="node"><b>text snapshot</b><span class="dim">one sentence</span></div><div class="arr">&rarr;</div>
+      <div class="node"><b>LM Studio</b><span class="dim">v2, 800ms</span></div><div class="arr">&rarr;</div>
+      <div class="node"><b>one word</b><span class="dim">"right"</span></div><div class="arr">&rarr;</div>
+      <div class="node"><b>board updates</b><span class="dim">move applied</span></div>
+    </div>
+    <div class="wipe">&#9888; memory wiped &mdash; v2 never sees the previous move. Every decision is made by a stranger looking at the board for the first time.</div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="n">2.</span> What v2 actually sees</h2>
+    <p>It never sees the board. It reads <b>one sentence</b> and picks a word:</p>
+    <pre class="prompt">Snake game, 12x12 board. Your head is at (0,6), moving down, body length 14.
+Food is at (2, 9). Your options:
+  up: <span class="r">ILLEGAL: reverse of current direction</span>
+  down: <span class="k">SAFE, moves toward food</span>
+  left: <span class="r">BLOCKED: wall</span>
+  right: <span class="k">SAFE, moves toward food</span>
+
+v2 answered: <b>"right"</b></pre>
+    <p>This is a real decision from your game (move 310). Food is 3 rows below, <span class="k">down is safe and toward food</span> &mdash; and v2 went <b>right</b>, staying on its loop. A 2B model pattern-matches the snapshot; it has no idea it's been circling.</p>
+  </div>
+
+  <div class="panel">
+    <h2><span class="n">3.</span> The actual loop, replayed</h2>
+    <p>Your game 2, last 100 moves. Watch the head:</p>
+    <div class="gridbox"><canvas id="loop" width="360" height="360"></canvas></div>
+    <div style="margin-top:12px">
+      <span class="stat">laps: <b id="laps">0</b></span>
+      <span class="stat">unique cells in last 100 moves: <b class="y">18</b></span>
+      <span class="stat">food visits: <b class="r">0</b></span>
+    </div>
+    <p class="dim" style="font-size:13px">The <span class="y">yellow dot</span> is food at (2,9) &mdash; three rows below the loop, pulsing away, never visited. Every single step of the loop looks locally "SAFE" to the goldfish, so nothing ever tells it to leave.</p>
+  </div>
+
+  <div class="panel">
+    <h2><span class="n">4.</span> Why the loop eventually kills it</h2>
+    <p>The circle is perfectly stable &mdash; until the local picture changes. Two things break it:</p>
+    <div class="cols">
+      <div>
+        <p><b class="y">a) It eats.</b> The body grows one segment, the tail stops vacating, and a cell the loop needs is suddenly <span class="r">BLOCKED: your own body</span>. The loop has a hole in it and the goldfish has no backup plan.</p>
+      </div>
+      <div>
+        <p><b class="y">b) Greed.</b> Food spawns somewhere tempting, one "moves toward food" step pulls it off the loop &mdash; into a corner or its own body &mdash; and it can't find its way back.</p>
+      </div>
+    </div>
+    <p class="dim" style="font-size:13px">That's the shape of every v2 death: long, boring, competent circling &hellip; then one changed snapshot and it's over.</p>
+  </div>
+
+  <div class="panel">
+    <h2><span class="n">5.</span> The fix: give the goldfish a memory</h2>
+    <div class="fix"><b>Last-N moves in the prompt.</b> Append "your last 8 moves: up, right, right, down&hellip;" Cheap, and the model can literally see itself repeating.</div>
+    <div class="fix"><b>Visited-cell warning.</b> Track visit counts in the runner; when a cell is hit 4+ times in 40 moves, add "you've been circling &mdash; break the pattern."</div>
+    <div class="fix"><b>Runner-side loop breaker.</b> Detect the cycle deterministically (like the analysis above did) and force an exploratory move off the loop.</div>
+    <p class="dim" style="font-size:13px">Say the word and I'll wire option 1 into the runner and re-run &mdash; it's a five-minute change.</p>
+  </div>
+</div>
+
+<script>
+const LOOP = [[2,3],[1,3],[0,3],[0,4],[0,5],[0,6],[1,6],[2,6],[3,6],[3,5],[2,5],[1,5],[1,4],[2,4],[3,4],[4,4],[4,3],[3,3]];
+const FOOD = [2,9], N = 12, S = 30;
+const cv = document.getElementById('loop'), ctx = cv.getContext('2d');
+const lapsEl = document.getElementById('laps');
+let step = 0, laps = 0;
+function draw() {
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // grid
+  ctx.strokeStyle = '#1a2230'; ctx.lineWidth = 1;
+  for (let i = 0; i <= N; i++) {
+    ctx.beginPath(); ctx.moveTo(i*S,0); ctx.lineTo(i*S,N*S); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*S); ctx.lineTo(N*S,i*S); ctx.stroke();
+  }
+  // trail
+  ctx.fillStyle = 'rgba(57,211,83,0.25)';
+  LOOP.forEach(([x,y]) => ctx.fillRect(x*S+1, y*S+1, S-2, S-2));
+  // path so far this lap
+  ctx.strokeStyle = '#39d353'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let i = 0; i <= step; i++) {
+    const [x,y] = LOOP[i % LOOP.length];
+    i === 0 ? ctx.moveTo(x*S+S/2, y*S+S/2) : ctx.lineTo(x*S+S/2, y*S+S/2);
+  }
+  ctx.stroke();
+  // food (pulsing)
+  const p = 4 + Math.sin(Date.now()/300)*2;
+  ctx.fillStyle = '#e3b341';
+  ctx.beginPath(); ctx.arc(FOOD[0]*S+S/2, FOOD[1]*S+S/2, p+3, 0, 7); ctx.fill();
+  // head
+  const [hx,hy] = LOOP[step % LOOP.length];
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(hx*S+S/2, hy*S+S/2, 8, 0, 7); ctx.fill();
+  ctx.fillStyle = '#39d353';
+  ctx.beginPath(); ctx.arc(hx*S+S/2, hy*S+S/2, 5, 0, 7); ctx.fill();
+}
+setInterval(() => {
+  step++;
+  if (step % LOOP.length === 0) { laps++; lapsEl.textContent = laps; }
+  draw();
+}, 450);
+draw();
+</script>
+</body>
+</html>

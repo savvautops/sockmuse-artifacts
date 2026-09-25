@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Voice Note Sounded Real. The Person Probably Wasn't.</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+:root { --ink:#151619; --muted:#61646b; --paper:#f7f3ec; --white:#fffdfa; --blue:#157fbb; --blue2:#dceef8; --red:#d94d43; --line:#d8d1c6; --lime:#cce85a; }
+html, body { margin:0; padding:0; background:#d9d7d2; color:var(--ink); font-family:'Liberation Sans','Noto Sans',sans-serif; }
+.page { width:210mm; min-height:297mm; height:297mm; padding:17mm 18mm 16mm; background:var(--paper); position:relative; overflow:hidden; page-break-after:always; }
+.page:last-child { page-break-after:auto; }
+.kicker { font-size:9pt; text-transform:uppercase; letter-spacing:.18em; font-weight:700; color:var(--red); }
+h1,h2,h3,p,blockquote { margin-top:0; }
+h1 { font-size:38pt; line-height:.96; letter-spacing:-.04em; margin:8mm 0 7mm; max-width:160mm; }
+h2 { font-size:25pt; line-height:1.04; letter-spacing:-.025em; margin:3mm 0 8mm; max-width:160mm; }
+h3 { font-size:13pt; line-height:1.2; margin:0 0 2.5mm; }
+p,li { font-size:10.5pt; line-height:1.52; }
+p { margin-bottom:4.2mm; }
+a { color:#126b9b; text-decoration:none; }
+.lede { font-family:'Noto Serif','Liberation Serif',serif; font-size:15.5pt; line-height:1.48; max-width:156mm; }
+.rule { height:1px; background:var(--line); margin:6mm 0; }
+.page-no { position:absolute; bottom:8mm; right:18mm; font-size:8.5pt; color:#77736c; }
+.running { position:absolute; bottom:8mm; left:18mm; font-size:8pt; color:#77736c; letter-spacing:.06em; text-transform:uppercase; }
+.hero-mark { position:absolute; right:5mm; top:5mm; width:56mm; height:56mm; border-radius:50%; background:var(--lime); opacity:.92; }
+.hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:12mm; align-items:end; margin-top:18mm; }
+.chat-stack { padding:8mm 0 0; }
+.bubble { max-width:74mm; padding:4mm 5mm; margin:0 0 4mm; border-radius:6mm; font-size:11.5pt; line-height:1.35; }
+.bubble.in { background:#22252a; color:white; border-bottom-left-radius:1.5mm; }
+.bubble.out { background:var(--blue); color:white; margin-left:auto; border-bottom-right-radius:1.5mm; }
+.caption { font-size:8.5pt; color:var(--muted); line-height:1.45; }
+.pull { font-family:'Noto Serif','Liberation Serif',serif; font-size:20pt; line-height:1.24; border-left:4px solid var(--red); padding-left:7mm; margin:8mm 0; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:10mm; }
+.card { background:var(--white); border:1px solid var(--line); padding:6mm; border-radius:4mm; margin-bottom:5mm; }
+.card.blue { background:var(--blue2); border-color:#bdd9e8; }
+.card.dark { background:#202226; color:#fff; border:0; }
+.step { display:grid; grid-template-columns:12mm 1fr; gap:4mm; padding:4mm 0; border-top:1px solid var(--line); }
+.step:first-child { border-top:0; }
+.num { width:10mm; height:10mm; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-size:9pt; font-weight:700; }
+blockquote { font-family:'Noto Serif','Liberation Serif',serif; font-size:14pt; line-height:1.45; margin:7mm 0; padding:6mm 8mm; background:var(--white); border-top:2px solid var(--ink); border-bottom:1px solid var(--line); }
+.signal { display:flex; gap:5mm; align-items:flex-start; padding:4mm 0; border-bottom:1px solid var(--line); }
+.signal:last-child { border-bottom:0; }
+.signal b { min-width:42mm; font-size:10.5pt; }
+.signal span { font-size:9.8pt; line-height:1.45; color:#37393e; }
+.matrix { width:100%; border-collapse:collapse; margin-top:5mm; }
+.matrix th { text-align:left; font-size:8.5pt; text-transform:uppercase; letter-spacing:.08em; color:#6b675f; padding:3mm 3mm; border-bottom:2px solid var(--ink); }
+.matrix td { font-size:9.3pt; line-height:1.36; vertical-align:top; padding:3.2mm 3mm; border-bottom:1px solid var(--line); }
+.matrix td:first-child { font-weight:700; width:28mm; }
+.callout { background:var(--lime); padding:6mm 7mm; border-radius:3mm; font-size:12pt; line-height:1.45; font-weight:700; margin:7mm 0; }
+ul { padding-left:6mm; margin:0 0 4mm; }
+li { margin-bottom:2.5mm; }
+.source-list { padding-left:0; list-style:none; }
+.source-list li { margin-bottom:4.5mm; padding-bottom:4mm; border-bottom:1px solid var(--line); font-size:9pt; line-height:1.4; }
+.small { font-size:9pt; color:var(--muted); line-height:1.45; }
+.compact h2 { margin-bottom:5mm; }
+.compact p { margin-bottom:3.4mm; }
+.compact .pull { margin:5mm 0; }
+.funnel { padding-top:14mm; padding-bottom:14mm; }
+.funnel p { margin-bottom:2.8mm; }
+.funnel .pull { font-size:18.5pt; margin:4mm 0; }
+.funnel .card { padding:5mm; margin-bottom:3mm; }
+.banner { display:inline-block; padding:2mm 3mm; background:var(--ink); color:white; font-size:8.5pt; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<section class="page">
+  <div class="hero-mark"></div>
+  <div class="kicker">A field note on synthetic trust</div>
+  <h1>The voice note sounded real.<br>The person probably wasn't.</h1>
+  <p class="lede">A stranger in my DMs sounded local, casual and completely human. That is exactly why the encounter changed the way I think about online scams.</p>
+  <div class="hero-grid">
+    <div>
+      <p>I used to think a voice note was the end of the bot test. Text could be generated. Photos could be stolen. But a spontaneous voice message, with a familiar accent and natural timing? That felt different.</p>
+      <p>Then an account that had already raised my suspicion sent one.</p>
+      <p>The voice sounded so believable that it reminded me of someone I knew. For a moment, the warning signs seemed less important. The voice had done what it was supposed to do: convert doubt into trust.</p>
+      <p><strong>That was the lesson.</strong> In 2026, “sounds human” is no longer meaningful verification.</p>
+    </div>
+    <div class="chat-stack">
+      <div class="bubble in">Hey you</div>
+      <div class="bubble out">Hope you're not a bot</div>
+      <div class="bubble in">Not a bot lol promise.</div>
+      <div class="bubble in">Just got back from the gym. What about u</div>
+      <p class="caption">Reconstructed from the exchange. The account is left unnamed because the useful story is the pattern, not the pile-on.</p>
+    </div>
+  </div>
+  <div class="running">Synthetic trust</div><div class="page-no">1 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">The encounter</div>
+  <h2>The conversation lowered my guard one small step at a time</h2>
+  <p class="lede">Nothing opened with money, malware or an obvious pitch. It began with ordinary banter.</p>
+  <div class="two">
+    <div>
+      <div class="step"><div class="num">1</div><div><h3>A low-friction opener</h3><p>“Hey you” created a reason to answer without giving me anything concrete to evaluate.</p></div></div>
+      <div class="step"><div class="num">2</div><div><h3>Instant familiarity</h3><p>The account said it liked my “vibe,” then quickly asked what city I lived in.</p></div></div>
+      <div class="step"><div class="num">3</div><div><h3>Location mirroring</h3><p>After I said Winnipeg, the account claimed to be from St. Vital. That may have been true. It may also have been a fast way to manufacture proximity.</p></div></div>
+      <div class="step"><div class="num">4</div><div><h3>Verification theatre</h3><p>When I challenged the account, it sent a voice note saying it was not a bot. The voice was natural enough to override my skepticism.</p></div></div>
+    </div>
+    <div>
+      <div class="card dark">
+        <h3>The sequence matters</h3>
+        <p>Each move was plausible by itself. Together they formed a funnel:</p>
+        <p style="font-size:15pt;line-height:1.5;margin:4mm 0 0;"><strong>attention<br>→ familiarity<br>→ reassurance<br>→ intimacy<br>→ leverage</strong></p>
+      </div>
+      <div class="card blue">
+        <h3>What I can and cannot prove</h3>
+        <p>I cannot prove whether the account was fully automated, a human operator using generated media and scripted replies, or a hybrid system that handed the chat back and forth.</p>
+        <p>What I can say is that its responses became ungrounded when I asked it to verify a detail in its own image.</p>
+      </div>
+    </div>
+  </div>
+  <blockquote>Modern scams do not need to pass a perfect Turing test. They only need to feel human long enough for us to take the next step.</blockquote>
+  <div class="running">The encounter</div><div class="page-no">2 / 10</div>
+</section>
+
+<section class="page compact">
+  <div class="kicker">The failure</div>
+  <h2>The photo test caught what the voice note concealed</h2>
+  <p>I asked a grounded question about a photo the account had sent: what colour was the outfit, and what time was shown on the wall clock inside the image?</p>
+  <p>The reply said the clock showed <strong>3:23</strong>. It did not. That number appeared in my phone's status bar at the top of the screenshot, while the wall clock in the photo showed a different time. The answer latched onto interface context instead of the object I had asked about.</p>
+  <div class="two" style="margin-top:7mm;">
+    <div class="card">
+      <div class="banner">The test</div>
+      <p style="font-size:15pt;line-height:1.45;margin:5mm 0 0;">“In the pic you sent, what's the colour of your outfit? And what's the time on the clock?”</p>
+    </div>
+    <div class="card dark">
+      <div class="banner" style="background:var(--red);">The reply</div>
+      <p style="font-size:15pt;line-height:1.45;margin:5mm 0 0;">“It's pink and the clock says 3:23. Happy now detective?”</p>
+    </div>
+  </div>
+  <p class="pull">The account did not fail because its grammar was robotic. It failed because it could not stay anchored to reality.</p>
+  <p>That distinction matters. “Bot spotting” advice often focuses on stiff language, fast replies, generic profiles or strange punctuation. Those clues are getting weaker. A model can type casually. A human scammer can paste generated replies. A synthetic voice can include pauses, laughter and a regional accent. A stolen photo can look completely ordinary.</p>
+  <p>The stronger test is not <em>How natural does this feel?</em> It is <em>Can the person reliably verify a fresh, specific claim that cannot be answered from the surrounding interface or public information?</em></p>
+  <div class="callout">A voice is now content. Treat it like a photo: persuasive, emotionally powerful, and not proof of identity.</div>
+  <p class="small">The FTC warns that scammers can clone a loved one's voice from a short audio clip and recommends verifying through a known number or another trusted person. The FBI has separately documented campaigns using AI-generated voice messages to establish rapport before seeking account access or funds.</p>
+  <div class="running">The photo test</div><div class="page-no">3 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">The playbook library</div>
+  <h2>The stories change, but every script is trying to convert trust</h2>
+  <p>The account in my DMs appeared to be moving toward sexual content. That points to one possible funnel, but it is only one of several common scripts. Scammers can switch scripts mid-conversation based on what gets a response.</p>
+  <table class="matrix">
+    <thead><tr><th>Script</th><th>Opening move</th><th>The pivot</th><th>What it wants</th></tr></thead>
+    <tbody>
+      <tr><td>Romance / companionship</td><td>Flattery, daily check-ins, shared interests</td><td>A crisis, travel cost, package fee or request for “help”</td><td>Money and continuing emotional access</td></tr>
+      <tr><td>Pig butchering</td><td>Romance, friendship or a “wrong number”</td><td>Casual mention of profitable crypto or trading</td><td>Deposits into a fake investment platform</td></tr>
+      <tr><td>Sextortion</td><td>Fast flirting and pressure to trade intimate images</td><td>A threat to send material to friends, family or work</td><td>Payment, more images or control</td></tr>
+      <tr><td>Task / job scam</td><td>Easy remote work, product boosting or app ratings</td><td>Pay to unlock tasks, clear a negative balance or withdraw earnings</td><td>Deposits and identity information</td></tr>
+      <tr><td>Impersonation</td><td>A boss, official or loved one appears in distress</td><td>Urgent secrecy and an unusual payment method</td><td>Money, credentials or sensitive information</td></tr>
+      <tr><td>Account takeover</td><td>Friendly support, giveaway or “help me verify” message</td><td>A link, login page or request for a one-time code</td><td>Control of the victim's account and contacts</td></tr>
+    </tbody>
+  </table>
+  <div class="card blue" style="margin-top:7mm;">
+    <h3>Why “pig butchering” is different</h3>
+    <p>The FBI describes it as a long confidence fraud: the scammer builds a relationship, claims access to profitable cryptocurrency trading, and directs the victim to transfer funds to wallets controlled by the fraudsters. The grooming can take weeks or months.</p>
+  </div>
+  <p class="small"><strong>Important:</strong> Sexual escalation does not prove sextortion, and a local claim does not prove impersonation. These are risk patterns, not mind-reading. The safe response is to stop escalating until identity and intent can be verified independently.</p>
+  <div class="running">Scam scripts</div><div class="page-no">4 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">A better test</div>
+  <h2>Stop testing for “human.” Test each claim and each request.</h2>
+  <p class="lede">A sophisticated scam can include a real human, a chatbot, a stolen identity and generated media at the same time. Verification has to survive that mix.</p>
+  <div style="margin-top:8mm;">
+    <div class="card"><h3>1. Verify through a separate channel</h3><p>If someone claims to be a person you know, contact them using a number or account you already trust. Do not use the contact details supplied in the suspicious message.</p></div>
+    <div class="card"><h3>2. Ask for fresh, grounded proof</h3><p>Use a specific, low-risk request connected to the present moment. Avoid public facts such as neighbourhood landmarks that can be searched in seconds.</p></div>
+    <div class="card"><h3>3. Test boundaries</h3><p>Say no to moving platforms, sending money, sharing codes or exchanging intimate media. A respectful stranger accepts a boundary; a scam funnel applies pressure.</p></div>
+  </div>
+  <div class="card dark" style="margin-top:8mm;">
+    <h3>A simple decision rule</h3>
+    <p style="font-size:14pt;line-height:1.45;margin-bottom:0;">The more consequential the request, the less weight you should give to realism - and the more verification you should require.</p>
+  </div>
+  <div class="running">Verification playbook</div><div class="page-no">5 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">A better test, continued</div>
+  <h2>Protect the boundary where the scam needs you to cross it</h2>
+  <p class="lede">Scam scripts succeed by turning a normal conversation into one irreversible action.</p>
+  <div style="margin-top:8mm;">
+    <div class="card"><h3>4. Separate identity from content</h3><p>A photo, video call or voice note may be genuine content without proving who sent it, when it was made or why it is being used.</p></div>
+    <div class="card"><h3>5. Watch the direction of travel</h3><p>Ask what the conversation is steadily moving toward: money, secrecy, urgency, an external link, account access, personal data or compromising images.</p></div>
+    <div class="card"><h3>6. Preserve evidence, then leave</h3><p>Save screenshots, report the account and block it. If intimate material is involved, do not pay or keep negotiating. Paying does not guarantee deletion.</p></div>
+  </div>
+  <div class="callout">The red flag is not that a stranger might be artificial. The red flag is that the conversation is engineered to remove your ability to pause, verify and say no.</div>
+  <blockquote>Good verification is not a clever “gotcha.” It is a habit: pause before the irreversible step, then confirm through a path the stranger does not control.</blockquote>
+  <div class="running">Verification playbook</div><div class="page-no">6 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">Weak evidence</div>
+  <h2>The old signs of “realness” are now easy to manufacture</h2>
+  <p class="lede">The problem is not that every voice or photo is fake. It is that each one can be detached from identity, timing and intent.</p>
+  <div style="margin-top:8mm;">
+    <div class="signal"><b>Natural grammar</b><span>Language models can produce slang, typos, jokes and local references. Polished writing can be generated; messy writing can be prompted.</span></div>
+    <div class="signal"><b>A familiar accent</b><span>Audio can be generated, replayed, coached or supplied by a human working inside a larger scam operation. Familiarity is an emotional cue, not authentication.</span></div>
+    <div class="signal"><b>A selfie</b><span>The image may be stolen, generated, old, or unrelated to the operator. Reverse-image searching can help, but a clean result does not prove ownership.</span></div>
+    <div class="signal"><b>A voice note</b><span>A voice note can be prerecorded or synthetic. Even when the voice is real, it does not prove the account holder's identity or intention.</span></div>
+    <div class="signal"><b>A video call</b><span>It is stronger evidence, but not enough for money, credentials or intimate content. Verify consequential requests separately.</span></div>
+    <div class="signal"><b>Local knowledge</b><span>Neighbourhood names, weather and landmarks can be searched instantly. Ask for proof that cannot be gathered from public context alone.</span></div>
+    <div class="signal"><b>Account history</b><span>Old accounts can be purchased or compromised. A long history lowers some risks, but does not make a new request safe.</span></div>
+  </div>
+  <blockquote>Trust should come from consistency over time, independent verification and respect for boundaries - not from one convincing artifact.</blockquote>
+  <p class="small">The FTC's advice for cloned-voice emergencies is direct: do not trust the voice alone. Call the person back using a number you already know, or verify through another trusted contact.</p>
+  <div class="running">Weak evidence</div><div class="page-no">7 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">What changed for me</div>
+  <h2>The internet did not become entirely fake. Proof just became more important than performance.</h2>
+  <p class="lede">The unsettling part was not that a bot may have fooled me. It was that the voice note sounded like someone I knew - familiar accent, ordinary cadence, no obvious synthetic wobble.</p>
+  <p>I still do not know exactly how the account was operated. It may have been an automated agent. It may have been a person using generated text, stolen images and prerecorded or synthetic audio. It may have been a human taking over at selected moments. That uncertainty is the point.</p>
+  <p>“Human or chatbot?” is becoming the wrong security question. A human operator can use automation. A bot can escalate to a human closer. A genuine voice can be attached to a false identity. The safer question is:</p>
+  <p class="pull">Has this person earned trust through independently verifiable behaviour - or are they only performing trust convincingly?</p>
+  <p>I am not going to assume every friendly stranger is a scammer. I am going to stop treating realism as proof. No money based on an online-only relationship. No verification codes. No private documents. No intimate images under pressure. No urgent move to a new platform through a link they provide.</p>
+  <p>That may sound less romantic than trusting a voice. It is also much harder to automate against.</p>
+  <div class="card blue" style="margin-top:10mm;">
+    <h3>The practical takeaway</h3>
+    <p style="font-size:13pt;line-height:1.5;margin-bottom:0;">Pause. Verify somewhere else. Protect what cannot be taken back. If the other person punishes you for doing those three things, you already have your answer.</p>
+  </div>
+  <div class="running">Conclusion</div><div class="page-no">8 / 10</div>
+</section>
+
+<section class="page compact funnel">
+  <div class="kicker">The funnel reveal</div>
+  <h2>what was the conversation actually selling?</h2>
+  <p class="lede">The moment I asked for a live call, the account stopped trying to prove its identity and showed me the destination.</p>
+  <div class="two" style="margin-top:7mm;align-items:start;">
+    <div>
+      <div class="bubble out">let's get on a video call</div>
+      <div class="bubble in">Calls arent rlly my thing on here</div>
+      <div class="bubble in">But if u wanna hear my voice and see me properly we can take it to my OF ;3</div>
+      <p class="caption">Sent next: onlyfans.com/lunabunn. Evidence of the pivot, not a recommendation.</p>
+    </div>
+    <div class="card dark">
+      <h3>The conversion moment</h3>
+      <p>The live-call test created friction. The reply removed that friction by redirecting me to a paid page.</p>
+      <p style="font-size:14pt;line-height:1.45;margin-bottom:0;"><strong>For this kind of funnel, calls do not scale. Links do.</strong></p>
+    </div>
+  </div>
+  <p>Then came the change in tone. The account called me “babe” as it introduced the offer. That tiny upgrade in intimacy marked the moment the conversation became a sales pitch.</p>
+  <p class="pull">The flirting was lead qualification. The paid page was the checkout.</p>
+  <p>This reframed the whole exchange. It may not have been a classic scammer building toward an emergency, a crypto deposit or blackmail. The sequence is also consistent with an AI-assisted OnlyFans operation: a possibly synthetic persona at the top, scripted or automated DMs acting as the sales team, and a subscription page waiting at the bottom.</p>
+  <p>That is still not proof. I do not know whether the images were AI-generated, the chat was fully automated, or a human stepped in. “Suspected scripted or AI-assisted behaviour” remains the careful description. The funnel shows what the account wanted, not exactly who or what was typing.</p>
+  <div class="card blue" style="margin-top:4mm;">
+    <h3>Business model does not mean harmless</h3>
+    <p style="margin-bottom:0;">A paid creator funnel can offer real value and still rely on misleading identity claims, undisclosed automation or manufactured intimacy. Subscription rather than extortion changes the threat, not the need to verify.</p>
+  </div>
+  <p style="margin-top:5mm;">By the end, my “is this a bot?” test had become a more useful question: <strong>where is this conversation trying to send me, and who benefits when I go there?</strong></p>
+  <div class="running">The funnel reveal</div><div class="page-no">9 / 10</div>
+</section>
+
+<section class="page">
+  <div class="kicker">References</div>
+  <h2>Sources and further reading</h2>
+  <p class="lede">Official guidance behind the scam patterns and verification advice in this essay.</p>
+  <ul class="source-list" style="margin-top:9mm;">
+    <li><strong>Federal Trade Commission - “Scammers use AI to enhance their family emergency schemes.”</strong><br>Explains how a short audio clip can be used to clone a loved one's voice and recommends independent verification.<br><a href="https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes?%2Ctwitter=">https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes?%2Ctwitter=</a></li>
+    <li><strong>Federal Bureau of Investigation - “Senior U.S. Officials Impersonated in Malicious Messaging Campaign.”</strong><br>Documents AI-generated voice messages used to establish rapport before attempts to access accounts, contacts or funds.<br><a href="https://www.fbi.gov/investigate/cyber/alerts/2025/senior-us-officials-impersonated-in-malicious-messaging-campaign">https://www.fbi.gov/investigate/cyber/alerts/2025/senior-us-officials-impersonated-in-malicious-messaging-campaign</a></li>
+    <li><strong>Federal Bureau of Investigation - “Building a Digital Defense Against a New Cryptocurrency Scam: Pig Butchering.”</strong><br>Describes the long confidence-building pattern that moves from online relationship to fraudulent crypto investment.<br><a href="https://www.fbi.gov/contact-us/field-offices/portland/news/press-releases/fbi-oregon-tech-tuesday-building-a-digital-defense-against-a-new-cryptocurrency-scam-pig-butchering/">https://www.fbi.gov/contact-us/field-offices/portland/news/press-releases/fbi-oregon-tech-tuesday-building-a-digital-defense-against-a-new-cryptocurrency-scam-pig-butchering/</a></li>
+    <li><strong>Federal Trade Commission - “Romance scammers' favorite lies exposed.”</strong><br>Summarizes common romance-scam stories and identifies cryptocurrency, wire transfers and gift cards as major payment red flags.<br><a href="https://www.ftc.gov/news-events/data-visualizations/data-spotlight/2023/02/romance-scammers-favorite-lies-exposed?utm_campaign=wp_the_cybersecurity_202&amp;utm_medium=email&amp;utm_source=newsletter&amp;wpisrc=nl_cybersecurity202">https://www.ftc.gov/news-events/data-visualizations/data-spotlight/2023/02/romance-scammers-favorite-lies-exposed</a></li>
+  </ul>
+  <div class="rule"></div>
+  <p class="small"><strong>About this account:</strong> This essay is based on a real direct-message exchange. Identifying details were intentionally omitted. The available evidence supports suspicion of scripted or AI-assisted behaviour, but it does not establish whether the account was fully automated, human-operated or hybrid.</p>
+  <p class="small"><strong>If this happens to you:</strong> Save evidence, report and block the account. If you sent money or account credentials, contact the relevant financial institution or platform immediately. If intimate material is used as leverage, do not pay; preserve the threats and report them to the platform and local authorities.</p>
+  <div class="running">Sources</div><div class="page-no">10 / 10</div>
+</section>
+</body>
+</html>

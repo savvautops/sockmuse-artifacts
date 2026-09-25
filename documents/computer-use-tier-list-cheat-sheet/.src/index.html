@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Computer Use Control Stack - Cheat Sheet</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+:root { --ink:#102238; --muted:#58697a; --paper:#f6f8fb; --white:#ffffff; --navy:#0b2742; --blue:#2474d2; --teal:#0d9b8b; --green:#48a868; --amber:#e09a2f; --red:#c94b55; --line:#d4dde6; --soft:#eaf1f7; }
+html, body { margin:0; padding:0; background:#dce4eb; color:var(--ink); font-family:'Liberation Sans','Noto Sans',sans-serif; }
+.page { width:210mm; height:297mm; min-height:297mm; padding:15mm 15mm 14mm; background:var(--paper); position:relative; overflow:hidden; page-break-after:always; }
+.page:last-child { page-break-after:auto; }
+.header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:3mm; margin-bottom:5mm; color:var(--muted); font-size:8.5pt; text-transform:uppercase; letter-spacing:.08em; }
+.footer { position:absolute; left:15mm; right:15mm; bottom:6mm; display:flex; justify-content:space-between; color:#708092; font-size:8pt; border-top:1px solid var(--line); padding-top:2mm; }
+h1,h2,h3,p { margin-top:0; }
+h1 { font-size:29pt; line-height:1.05; letter-spacing:-.03em; margin-bottom:4mm; }
+h2 { font-size:21pt; line-height:1.08; letter-spacing:-.02em; margin-bottom:4mm; }
+h3 { font-size:12pt; line-height:1.15; margin-bottom:2mm; }
+p, li { font-size:10.2pt; line-height:1.43; }
+p { margin-bottom:3mm; }
+ul,ol { margin:1.5mm 0 0 5mm; padding-left:4mm; }
+li { margin-bottom:1.2mm; }
+.code, code { font-family:'Liberation Mono',monospace; }
+code { background:#e9eef4; color:#0e466f; padding:.2mm .8mm; border-radius:1mm; font-size:9.2pt; }
+pre { margin:2.5mm 0; padding:3mm; background:#0b1f33; color:#d9f3ef; border-radius:2.5mm; font:8.8pt/1.42 'Liberation Mono',monospace; white-space:pre-wrap; }
+.kicker { color:var(--teal); font-size:9pt; font-weight:700; text-transform:uppercase; letter-spacing:.15em; margin-bottom:4mm; }
+.lede { font-size:14pt; line-height:1.35; color:#31485e; max-width:165mm; }
+.rule { height:1px; background:var(--line); margin:4mm 0; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:3mm; }
+.card { background:var(--white); border:1px solid var(--line); border-radius:3mm; padding:4mm; break-inside:avoid; }
+.card.tint { background:#eef7f5; border-color:#b9ded7; }
+.card.warn { background:#fff7e9; border-color:#efd09a; }
+.card.dark { background:var(--navy); color:white; border-color:var(--navy); }
+.callout { border-left:3mm solid var(--teal); background:#e8f4f3; padding:4mm 5mm; margin:4mm 0; }
+.callout strong { color:#06685e; }
+.small { font-size:8.7pt; line-height:1.38; color:var(--muted); }
+.micro { font-size:8pt; line-height:1.3; }
+.label { display:inline-block; font-size:7.8pt; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#fff; background:var(--navy); padding:1mm 2mm; border-radius:1mm; }
+.flow { display:flex; align-items:stretch; gap:2mm; margin:4mm 0; }
+.flow .step { flex:1; background:#fff; border:1px solid var(--line); padding:3mm; border-radius:2mm; text-align:center; font-size:9pt; line-height:1.3; }
+.flow .arrow { align-self:center; color:var(--teal); font-weight:700; }
+.tier { display:grid; grid-template-columns:16mm 32mm 1fr 30mm; gap:3mm; align-items:start; margin-bottom:3mm; padding:3.2mm; background:#fff; border-radius:2.5mm; border:1px solid var(--line); }
+.tier .grade { font-size:23pt; font-weight:700; line-height:1; text-align:center; }
+.tier .name { font-size:10pt; font-weight:700; }
+.tier .when { font-size:8.8pt; color:var(--muted); }
+.tier.s { border-left:4mm solid var(--green); } .tier.a { border-left:4mm solid var(--teal); } .tier.b { border-left:4mm solid var(--blue); } .tier.c { border-left:4mm solid var(--amber); } .tier.d { border-left:4mm solid var(--red); }
+.matrix { width:100%; border-collapse:collapse; background:#fff; font-size:8.7pt; }
+.matrix th { background:var(--navy); color:#fff; text-align:left; padding:2.5mm; font-size:8.3pt; }
+.matrix td { border-bottom:1px solid var(--line); padding:2.5mm; vertical-align:top; }
+.matrix tr:last-child td { border-bottom:0; }
+.bigformula { font-size:20pt; font-weight:700; line-height:1.25; color:var(--navy); margin:6mm 0; }
+.mono-box { border:1px solid #b8c8d7; background:#edf3f7; border-radius:2mm; padding:3mm; font:9pt/1.4 'Liberation Mono',monospace; }
+.checklist { list-style:none; padding:0; margin-left:0; }
+.checklist li { padding-left:6mm; position:relative; margin-bottom:2mm; }
+.checklist li:before { content:'[ ]'; position:absolute; left:0; color:var(--teal); font-family:'Liberation Mono',monospace; font-weight:700; }
+.note { color:var(--muted); font-size:9pt; }
+a { color:#0b66b3; text-decoration:none; }
+.cover { background:linear-gradient(145deg,#081f35 0%,#103d5a 58%,#0e776f 100%); color:white; }
+.cover .footer { color:#b9d2df; border-color:rgba(255,255,255,.22); }
+.cover .kicker { color:#81e0d4; }
+.cover .lede { color:#d8e7ee; }
+.cover .hero { margin-top:18mm; }
+.cover .stackline { margin-top:16mm; padding:6mm; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.06); border-radius:4mm; font:12pt/1.55 'Liberation Mono',monospace; }
+.cover .memory { margin-top:12mm; display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.cover .memory div { padding:4mm; background:rgba(255,255,255,.08); border-radius:3mm; }
+.cover .memory strong { display:block; color:#8ae4d8; margin-bottom:1.5mm; }
+.keyboard .bigformula { margin:4mm 0; }
+.keyboard pre { margin:2mm 0; padding:2.5mm; }
+.keyboard .callout { margin:3mm 0; padding:3mm 4mm; }
+
+/* v1.1 layout pass: use the full sheet instead of leaving a dead lower third. */
+.page:not(.cover) { display:flex; flex-direction:column; justify-content:space-between; }
+.page:not(.cover) > .footer { position:static; margin-top:2mm; flex:0 0 auto; }
+.page:not(.cover) > h2 { margin-bottom:2mm; }
+.page:not(.cover) > .lede { margin-bottom:2mm; }
+.cover { display:flex; flex-direction:column; }
+.cover .hero { margin-top:0; flex:1; display:flex; flex-direction:column; justify-content:center; gap:5mm; }
+.cover .hero > * { margin-top:0; margin-bottom:0; }
+.cover .route-ribbon { display:grid; grid-template-columns:repeat(5,1fr); gap:2mm; }
+.cover .route-ribbon div { padding:3mm 2mm; text-align:center; border:1px solid rgba(255,255,255,.28); border-radius:2mm; background:rgba(4,21,35,.22); font-size:8.5pt; line-height:1.25; }
+.cover .route-ribbon b { display:block; margin-bottom:1mm; color:#8ae4d8; font-size:11pt; }
+.keyboard { display:block !important; }
+.keyboard > .footer { position:absolute !important; margin-top:0 !important; }
+</style>
+</head>
+<body>
+<section class="page cover">
+  <div class="hero">
+    <div class="kicker">Owner-controlled computer use</div>
+    <h1>The Computer Use<br>Control Stack</h1>
+    <p class="lede">A field guide for routing desktop tasks through the cheapest, most reliable interface first: commands, app APIs, accessibility trees, keyboard pipelines, then local vision.</p>
+    <div class="stackline">intent -> choose lane -> execute one typed action -> verify state -> recover or escalate</div>
+    <div class="memory">
+      <div><strong>The desktop DOM</strong>The operating system accessibility tree: roles, names, values, state, actions, and bounds.</div>
+      <div><strong>Pixels and coordinates</strong>Pixels are an observation. Coordinates are an actuator target. Neither explains what a control means.</div>
+      <div><strong>CLI-first goal</strong>Do not claim "40% of all tasks." Measure your own workload, then push the eligible command lane toward complete coverage.</div>
+      <div><strong>Vim correction</strong>Blind key mashing is weak. A named, observable, verified Vim-style macro is a powerful automation node.</div>
+    </div>
+    <div class="route-ribbon" aria-label="Preferred routing order">
+      <div><b>1</b>API / CLI</div>
+      <div><b>2</b>DOM / a11y</div>
+      <div><b>3</b>Keyboard node</div>
+      <div><b>4</b>Local vision</div>
+      <div><b>5</b>Raw input</div>
+    </div>
+  </div>
+  <div class="footer"><span>Computer Use Cheat Sheet</span><span>v1.1 | September 2026 | 1</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>Control surfaces</span><span>Tier list</span></div>
+  <h2>Use the richest interface the software exposes</h2>
+  <p class="lede">Reliability falls as meaning disappears. Route each task from semantic control toward visual control, not the other way around.</p>
+
+  <div class="tier s"><div class="grade">S</div><div><div class="name">Native API / CLI</div><div class="when">Structured commands</div></div><div>Application APIs, app-native command line interfaces, scripts, direct file formats, database calls, process control.</div><div class="small"><b>Best:</b> speed, repeatability, auditability</div></div>
+  <div class="tier a"><div class="grade">A</div><div><div class="name">DOM / a11y tree</div><div class="when">Semantic elements</div></div><div>Browser Document Object Model (DOM), Windows UI Automation, macOS Accessibility, Linux AT-SPI. Select by role/name/state and invoke actions.</div><div class="small"><b>Best:</b> GUI control without visual guessing</div></div>
+  <div class="tier b"><div class="grade">B</div><div><div class="name">Keyboard nodes</div><div class="when">Deterministic sequences</div></div><div>Hotkeys, command palettes, Vim motions, tmux macros, launcher flows. Strong when focus and postconditions are observable.</div><div class="small"><b>Best:</b> fast composable workflows</div></div>
+  <div class="tier c"><div class="grade">C</div><div><div class="name">Local vision</div><div class="when">Semantic blind spots</div></div><div>Screenshot, optical character recognition (OCR), icon/text detection, visual grounding, then click coordinates. Use only after semantic lanes miss.</div><div class="small"><b>Best:</b> canvas, games, remote desktops</div></div>
+  <div class="tier d"><div class="grade">D</div><div><div class="name">Raw pixels</div><div class="when">Last resort</div></div><div>Fixed coordinates, template matching, color probes, blind Tab loops, timed sleeps. Fragile under layout, scale, theme, or latency changes.</div><div class="small"><b>Use:</b> narrow stable targets only</div></div>
+
+  <div class="callout"><strong>Important:</strong> the same tool can move tiers. A keyboard action with no state check is D-tier. The same key sequence wrapped with preconditions, focus checks, output capture, and verification is B-tier and can approach A-tier reliability.</div>
+  <div class="footer"><span>Semantic first, pixels last</span><span>2</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>Mental model</span><span>What replaces the DOM?</span></div>
+  <h2>The accessibility tree is the desktop DOM</h2>
+  <p>Desktop applications expose a semantic hierarchy to assistive technology and automation clients. Names differ by platform, but the useful fields are similar.</p>
+
+  <div class="grid3">
+    <div class="card"><h3>Windows</h3><p><b>UI Automation (UIA)</b></p><p class="small">Desktop root -> app window -> toolbar -> button -> list item. Controls expose properties and action patterns.</p></div>
+    <div class="card"><h3>macOS</h3><p><b>Accessibility API (AX)</b></p><p class="small">Applications expose accessible elements, roles, attributes, actions, children, and bounds.</p></div>
+    <div class="card"><h3>Linux</h3><p><b>AT-SPI</b></p><p class="small">Desktop applications publish accessible objects and actions through the accessibility bus.</p></div>
+  </div>
+
+  <div class="flow">
+    <div class="step"><b>Semantic node</b><br><span class="small">button "Save"</span></div><div class="arrow">-&gt;</div>
+    <div class="step"><b>Grounding</b><br><span class="small">match role + name</span></div><div class="arrow">-&gt;</div>
+    <div class="step"><b>Action</b><br><span class="small">invoke / click / key</span></div><div class="arrow">-&gt;</div>
+    <div class="step"><b>Evidence</b><br><span class="small">dialog closed, file exists</span></div>
+  </div>
+
+  <table class="matrix">
+    <thead><tr><th>Representation</th><th>What it tells you</th><th>What it does not tell you</th></tr></thead>
+    <tbody>
+      <tr><td><b>DOM</b></td><td>Web structure, attributes, text, events</td><td>Non-browser desktop UI</td></tr>
+      <tr><td><b>A11y tree</b></td><td>Role, label, state, actions, bounds</td><td>Unexposed canvas pixels</td></tr>
+      <tr><td><b>Screenshot</b></td><td>What the user can visually see</td><td>Meaning, stable identity, action contract</td></tr>
+      <tr><td><b>Coordinates</b></td><td>Where to send pointer input</td><td>What is there or whether it moved</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><strong>Memory rule:</strong> the tree says <i>what</i>; the screenshot shows <i>appearance</i>; grounding links meaning to location; coordinates say <i>where to act</i>.</div>
+
+  <div class="grid2">
+    <div class="card tint"><h3>Browser lane</h3><p class="small">Prefer app API -> browser automation protocol / DOM -> browser accessibility tree -> local vision -> coordinates.</p></div>
+    <div class="card tint"><h3>Desktop lane</h3><p class="small">Prefer app API / CLI -> operating system accessibility tree -> verified keyboard node -> local vision -> coordinates.</p></div>
+  </div>
+  <div class="footer"><span>The structure changes; the routing principle does not</span><span>3</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>Lane 1</span><span>Perfect the CLI-first path</span></div>
+  <h2>Turn common computer work into typed commands</h2>
+  <p class="lede">Opening and closing apps is valid CLI work, but it is only the lifecycle layer. Real coverage comes from combining lifecycle control with app capabilities and verification.</p>
+
+  <div class="grid3">
+    <div class="card dark"><h3>1. Lifecycle</h3><p class="small" style="color:#d8e7ee">Open, focus, list, status, quit, restart. Implement once behind a cross-platform <span class="code">appctl</span> adapter.</p></div>
+    <div class="card dark"><h3>2. Capability</h3><p class="small" style="color:#d8e7ee">Use native CLIs, APIs, document formats, scripting bridges, plugins, or generated CLI-Anything harnesses.</p></div>
+    <div class="card dark"><h3>3. Evidence</h3><p class="small" style="color:#d8e7ee">Read process state, exit code, JSON output, changed files, app state, or an accessibility-tree event.</p></div>
+  </div>
+
+  <h3 style="margin-top:5mm">Cross-platform lifecycle examples</h3>
+  <table class="matrix">
+    <thead><tr><th>OS</th><th>Open</th><th>Quit</th><th>Observe</th></tr></thead>
+    <tbody>
+      <tr><td><b>macOS</b></td><td><code>open -a "App"</code></td><td><code>osascript ... quit</code></td><td><code>pgrep -fl App</code></td></tr>
+      <tr><td><b>Linux</b></td><td><code>gtk-launch APP_ID</code></td><td><code>pkill -TERM name</code></td><td><code>pgrep -af name</code></td></tr>
+      <tr><td><b>Windows</b></td><td><code>Start-Process app</code></td><td><code>Stop-Process -Name app</code></td><td><code>Get-Process app</code></td></tr>
+    </tbody>
+  </table>
+  <p class="note">Wrap operating-system commands behind one schema. Do not let the model invent raw shell text.</p>
+
+  <div class="grid2">
+    <div class="card"><h3>CLI-Anything's role</h3><p>Use it to create or adopt a stateful command-line harness for software whose useful functions are otherwise trapped behind a graphical interface.</p><p class="small">A harness should offer discoverable commands, structured JSON output, undo where possible, and tests against the real application.</p></div>
+    <div class="card warn"><h3>What it does not solve</h3><p>Launching a process is not the same as controlling its document, scene, timeline, or settings. Some apps expose no clean backend, and generated wrappers still require maintenance and verification.</p></div>
+  </div>
+
+  <div class="mono-box">appctl open obs
+appctl status obs --json
+appctl focus obs
+cli-anything-obs --json scene switch --name "Camera"
+appctl verify obs --expect-window "OBS Studio"</div>
+
+  <div class="callout"><strong>Target:</strong> take the workflows that are eligible for structured control and drive that class toward 100% coverage. The "40%" is a hypothesis until your own benchmark proves it.</div>
+  <div class="footer"><span>Commands are the control plane, not just the launcher</span><span>4</span></div>
+</section>
+
+<section class="page keyboard">
+  <div class="header"><span>Lane 3</span><span>Keyboard as a workflow node</span></div>
+  <h2>Vim is not the problem. Blindness is.</h2>
+  <p class="lede">A keyboard sequence becomes agent-grade when it has a contract. Treat it like an n8n node: typed inputs, declared preconditions, bounded execution, observable outputs, and a recovery path.</p>
+
+  <div class="bigformula">Keyboard node = macro + focus + state + timeout + proof</div>
+
+  <div class="grid2">
+    <div class="card tint"><h3>Strong keyboard pipeline</h3><ul>
+      <li><b>Named intent:</b> <code>editor.save_all</code></li>
+      <li><b>Precondition:</b> editor is foreground; no modal dialog</li>
+      <li><b>Input:</b> file path or buffer selector</li>
+      <li><b>Sequence:</b> validated keys, not free-form text</li>
+      <li><b>Postcondition:</b> dirty flag cleared or file timestamp changed</li>
+      <li><b>Recovery:</b> Escape, refocus, retry once, then escalate</li>
+    </ul></div>
+    <div class="card warn"><h3>Weak keyboard pipeline</h3><ul>
+      <li>Assumes the correct window has focus</li>
+      <li>Uses a fixed number of Tab presses</li>
+      <li>Sleeps for arbitrary durations</li>
+      <li>Cannot detect a popup or changed layout</li>
+      <li>Repeats destructive keys after uncertainty</li>
+      <li>Reports success because keys were sent</li>
+    </ul></div>
+  </div>
+
+  <h3 style="margin-top:5mm">Node contract</h3>
+  <pre>{
+  "id": "vim.apply_refactor",
+  "inputs": {"file": "string", "macro": "approved_id"},
+  "requires": ["vim_mode=normal", "buffer_loaded"],
+  "action": {"keys": ["@r"]},
+  "expect": ["buffer_changed", "diagnostics_not_increased"],
+  "timeout_ms": 3000,
+  "on_fail": ["escape", "capture_state", "escalate"]
+}</pre>
+
+  <h3>Where keyboard nodes shine</h3>
+  <div class="grid3">
+    <div class="card"><h3>Editors</h3><p class="small">Vim motions, command palettes, save/build/test loops, repeatable refactors.</p></div>
+    <div class="card"><h3>Terminal multiplexers</h3><p class="small">Create panes, route commands, capture pane output, attach to named sessions.</p></div>
+    <div class="card"><h3>Stable applications</h3><p class="small">Known shortcuts for new/open/export, provided state can be checked before and after.</p></div>
+  </div>
+  <div class="callout"><strong>Design rule:</strong> use keys as an actuator, not as perception. Read focus and state from the accessibility tree, process table, editor API, filesystem, or captured terminal output.</div>
+  <div class="footer"><span>Vim macros can be first-class tools</span><span>5</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>Local intelligence</span><span>Under 1 GB model budget</span></div>
+  <h2>Make the small model choose, not hallucinate</h2>
+  <p class="lede">A tiny local language model can route intent, fill arguments, rank elements, and select recovery steps. It should not generate unconstrained shell commands or invent coordinates.</p>
+
+  <div class="flow">
+    <div class="step"><b>User intent</b><br><span class="small">"open OBS and switch scene"</span></div><div class="arrow">-&gt;</div>
+    <div class="step"><b>Local router</b><br><span class="small">class + slots</span></div><div class="arrow">-&gt;</div>
+    <div class="step"><b>Schema validator</b><br><span class="small">allowlist + types</span></div><div class="arrow">-&gt;</div>
+    <div class="step"><b>Deterministic tool</b><br><span class="small">execute + prove</span></div>
+  </div>
+
+  <table class="matrix">
+    <thead><tr><th>Good tiny-model job</th><th>Output shape</th><th>Why it fits</th></tr></thead>
+    <tbody>
+      <tr><td>Choose a lane</td><td><code>{lane, confidence}</code></td><td>Small label set</td></tr>
+      <tr><td>Select a tool</td><td><code>{tool_id}</code></td><td>Catalog retrieval</td></tr>
+      <tr><td>Fill arguments</td><td><code>{app, action, target}</code></td><td>Constrained extraction</td></tr>
+      <tr><td>Rank UI elements</td><td><code>{element_id}</code></td><td>Short candidate list</td></tr>
+      <tr><td>Choose recovery</td><td><code>{retry|fallback|ask}</code></td><td>Finite policy</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid2" style="margin-top:4mm">
+    <div class="card"><h3>Model profile to benchmark</h3><ul>
+      <li>0.5B to 0.8B parameters</li>
+      <li>4-bit quantization where quality holds</li>
+      <li>Grammar-constrained JSON output</li>
+      <li>Short context built from retrieved tool specs</li>
+      <li>Fast enough to run on every action</li>
+    </ul><p class="small">Under 1 GB should be treated as a disk/RAM budget to verify on the actual runtime, not a quality guarantee.</p></div>
+    <div class="card"><h3>Keep outside the model</h3><ul>
+      <li>Permissions and destructive-action gates</li>
+      <li>Shell quoting and process management</li>
+      <li>Path normalization and file checks</li>
+      <li>Retries, timeouts, and idempotency</li>
+      <li>Evidence collection and audit logs</li>
+    </ul></div>
+  </div>
+
+  <div class="callout"><strong>Browser savings:</strong> route browser tasks through API or DOM extraction first. Let the local model map intent to a known action. Use local OCR or a local vision model only when the page hides semantics, and reserve paid remote vision for unsupported edge cases.</div>
+  <div class="footer"><span>Model for judgment, code for guarantees</span><span>6</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>System design</span><span>Discrete computer-use pipeline</span></div>
+  <h2>One loop, five lanes, explicit escalation</h2>
+  <p>The planner emits one typed action at a time. Every action must name an expected state change. Failure moves down one lane; it never triggers an unbounded retry loop.</p>
+
+  <table class="matrix">
+    <thead><tr><th>Stage</th><th>Responsibility</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. Observe</b></td><td>Collect process list, active window, DOM/a11y tree, screenshot, terminal output</td><td>Raw state bundle</td></tr>
+      <tr><td><b>2. Normalize</b></td><td>Reduce to app, role, name, value, state, bounds, confidence</td><td>Compact state</td></tr>
+      <tr><td><b>3. Route</b></td><td>Choose API/CLI, semantic tree, keyboard node, local vision, or raw input</td><td>Lane + tool candidates</td></tr>
+      <tr><td><b>4. Plan</b></td><td>Select one action and define its expected effect</td><td>Typed action</td></tr>
+      <tr><td><b>5. Validate</b></td><td>Check schema, allowlist, arguments, permissions, and risk</td><td>Approved or blocked</td></tr>
+      <tr><td><b>6. Act</b></td><td>Run exactly one adapter, node, or actuator</td><td>Execution result</td></tr>
+      <tr><td><b>7. Verify</b></td><td>Re-observe and compare actual state with expected state</td><td>Evidence verdict</td></tr>
+      <tr><td><b>8. Recover</b></td><td>Retry safely, switch lane, restore state, or ask a human</td><td>Next action</td></tr>
+      <tr><td><b>9. Learn</b></td><td>Record trace, failure cause, and reusable workflow candidate</td><td>Benchmark data</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:4mm">Lane ladder</h3>
+  <div class="flow">
+    <div class="step"><b>1</b><br>API / CLI</div><div class="arrow">-&gt;</div>
+    <div class="step"><b>2</b><br>DOM / a11y</div><div class="arrow">-&gt;</div>
+    <div class="step"><b>3</b><br>Keyboard node</div><div class="arrow">-&gt;</div>
+    <div class="step"><b>4</b><br>Local vision</div><div class="arrow">-&gt;</div>
+    <div class="step"><b>5</b><br>Raw input</div>
+  </div>
+
+  <pre>{
+  "goal": "save the current project",
+  "lane": "keyboard_node",
+  "tool": "editor.save_all",
+  "args": {},
+  "expect": {"dirty_buffers": 0},
+  "risk": "low",
+  "evidence": ["editor_state", "file_mtime"]
+}</pre>
+
+  <div class="grid2">
+    <div class="card"><h3>Local vision package</h3><p class="small">Screenshot crop -> OCR -> icon/text candidates -> local grounding model -> element ID or coordinates -> click -> screenshot/a11y diff.</p></div>
+    <div class="card warn"><h3>Hard stop conditions</h3><p class="small">Unknown destination, destructive action without approval, repeated mismatch, low-confidence target, stale screenshot, unexpected dialog, or state that cannot be verified.</p></div>
+  </div>
+  <div class="footer"><span>Every action has a before, an after, and evidence</span><span>7</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>Implementation plan</span><span>From hypothesis to measured coverage</span></div>
+  <h2>Perfect a bounded workflow set before chasing universality</h2>
+
+  <div class="grid2">
+    <div class="card"><h3>Phase 1: inventory</h3><ul class="checklist">
+      <li>Log 50 real computer tasks</li>
+      <li>Split each into atomic actions</li>
+      <li>Mark current best lane</li>
+      <li>Count frequency and failure cost</li>
+    </ul></div>
+    <div class="card"><h3>Phase 2: adapters</h3><ul class="checklist">
+      <li>Build cross-platform <code>appctl</code></li>
+      <li>Register existing CLIs and APIs</li>
+      <li>Add CLI-Anything harnesses selectively</li>
+      <li>Require JSON and evidence hooks</li>
+    </ul></div>
+    <div class="card"><h3>Phase 3: keyboard nodes</h3><ul class="checklist">
+      <li>Package Vim/tmux/editor macros</li>
+      <li>Declare focus preconditions</li>
+      <li>Add postcondition checks</li>
+      <li>Test interruption and recovery</li>
+    </ul></div>
+    <div class="card"><h3>Phase 4: semantic + vision</h3><ul class="checklist">
+      <li>Add OS accessibility adapters</li>
+      <li>Use local OCR before vision</li>
+      <li>Benchmark a sub-1GB router</li>
+      <li>Add local visual grounding fallback</li>
+    </ul></div>
+  </div>
+
+  <h3 style="margin-top:5mm">Coverage scorecard</h3>
+  <table class="matrix">
+    <thead><tr><th>Metric</th><th>Definition</th><th>Desired direction</th></tr></thead>
+    <tbody>
+      <tr><td><b>Semantic coverage</b></td><td>% actions completed without pixels</td><td>Up</td></tr>
+      <tr><td><b>Eligible-lane coverage</b></td><td>% CLI-suitable workflows fully supported</td><td>Toward 100%</td></tr>
+      <tr><td><b>Verified success</b></td><td>% actions with confirmed postcondition</td><td>Up</td></tr>
+      <tr><td><b>Fallback rate</b></td><td>% actions escalating to vision</td><td>Down</td></tr>
+      <tr><td><b>Recovery rate</b></td><td>% failures recovered without unsafe retry</td><td>Up</td></tr>
+      <tr><td><b>Local ratio</b></td><td>% decisions completed without paid inference</td><td>Up</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><strong>Benchmark method:</strong> run the same fixed task set after every change. Record lane, latency, model memory, success, proof, retries, and human intervention. This turns "40%" from a guess into a baseline and shows whether your command lane is actually approaching complete coverage.</div>
+  <div class="footer"><span>Optimize measured workflows, not imagined universality</span><span>8</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><span>Quick reference</span><span>Remember this page</span></div>
+  <h2>The five-second routing test</h2>
+  <ol>
+    <li><b>Can a command or API do it?</b> Use that. Wrap it behind a typed tool.</li>
+    <li><b>Can the DOM or accessibility tree name it?</b> Select the semantic element and invoke its action.</li>
+    <li><b>Is there a stable keyboard workflow?</b> Call a verified macro node with focus and postconditions.</li>
+    <li><b>Are semantics missing?</b> Use local OCR and local visual grounding.</li>
+    <li><b>Only coordinates remain?</b> Click once, re-observe immediately, and stop on mismatch.</li>
+  </ol>
+
+  <div class="grid2" style="margin-top:5mm">
+    <div class="card tint"><h3>Core vocabulary</h3>
+      <p><b>Observer:</b> collects machine and UI state.</p>
+      <p><b>Normalizer:</b> turns platform-specific state into one schema.</p>
+      <p><b>Router:</b> chooses the cheapest reliable lane.</p>
+      <p><b>Grounder:</b> maps an intended target to an element or location.</p>
+      <p><b>Actuator:</b> sends a command, action, key, or pointer event.</p>
+      <p><b>Verifier:</b> proves that the intended state changed.</p>
+    </div>
+    <div class="card"><h3>Architecture in one line</h3>
+      <div class="mono-box">goal -> state -> route -> typed action -> guard -> execute -> evidence -> recover</div>
+      <h3 style="margin-top:4mm">What to build first</h3>
+      <ol>
+        <li><code>appctl</code> for open/focus/status/quit</li>
+        <li>Tool registry with JSON schemas</li>
+        <li>Vim/tmux macro-node runner</li>
+        <li>Windows/macOS/Linux a11y adapters</li>
+        <li>Small local router benchmark</li>
+        <li>Local OCR and grounding fallback</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+  <h3>Sources and further reading</h3>
+  <p class="small"><b>Microsoft UI Automation Tree Overview.</b> Describes a desktop-rooted tree whose descendants represent application windows and controls.<br><a href="https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-treeoverview">https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-treeoverview</a></p>
+  <p class="small"><b>W3C Core Accessibility API Mappings 1.2.</b> Maps web semantics across UIA, AT-SPI, and macOS AX APIs.<br><a href="https://www.w3.org/TR/2023/CRD-core-aam-1.2-20230626/">https://www.w3.org/TR/2023/CRD-core-aam-1.2-20230626/</a></p>
+  <p class="small"><b>freedesktop.org AT-SPI2.</b> Technical background for Linux accessibility infrastructure.<br><a href="https://www.freedesktop.org/wiki/Accessibility/AT-SPI2/">https://www.freedesktop.org/wiki/Accessibility/AT-SPI2/</a></p>
+  <p class="small"><b>HKUDS CLI-Anything.</b> Framework and catalog for stateful CLI harnesses around software applications.<br><a href="https://github.com/hkuds/cli-anything">https://github.com/hkuds/cli-anything</a></p>
+
+  <div class="callout"><strong>Final principle:</strong> build an owner-controlled computer-use system as a federation of small reliable tools. The model chooses among them; the operating system and application adapters do the work; verification decides whether the work actually happened.</div>
+  <div class="footer"><span>Keep this page beside the implementation</span><span>9</span></div>
+</section>
+</body>
+</html>

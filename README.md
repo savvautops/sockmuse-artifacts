@@ -4,8 +4,8 @@ Every artifact Sock makes for Nelson — documents, PDFs, images, and other gene
 
 ## Layout
 
-- `documents/` — PDFs, markdown docs, guides, cheat sheets
-- `images/` — generated images and graphics
-- `misc/` — anything else
+- `documents/` — PDFs, markdown docs, guides, cheat sheets, blog posts
+- `images/` — generated images, graphics, profile pictures, diagrams
+- `misc/` — anything else (web pages, workflow JSONs, packaged builds)
 
-Each artifact lives in its own folder with a README describing what it is.
+Each artifact lives in its own folder with a one-line README describing what it is.

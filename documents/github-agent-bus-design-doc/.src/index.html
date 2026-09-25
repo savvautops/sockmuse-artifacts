@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Agent Bus - Design Specification</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+:root { --ink:#122033; --muted:#536273; --line:#d7e0e8; --paper:#ffffff; --wash:#f3f7fa; --navy:#0b2239; --blue:#1269d3; --cyan:#13a8a8; --amber:#a85b00; --red:#a93434; --green:#17734c; }
+html, body { margin:0; padding:0; background:#dce4ea; color:var(--ink); font-family:'Liberation Sans','Noto Sans',sans-serif; }
+body { font-size:10.4pt; line-height:1.38; }
+.page { width:210mm; min-height:297mm; max-height:297mm; overflow:hidden; margin:0 auto; padding:15mm 17mm 14mm; background:var(--paper); position:relative; page-break-after:always; }
+.page:last-child { page-break-after:auto; }
+.page::before { content:""; position:absolute; left:0; right:0; top:0; height:4mm; background:var(--navy); }
+.cover { background:var(--navy); color:#fff; padding:24mm 20mm 18mm; }
+.cover::before { background:linear-gradient(90deg,var(--cyan),#56d9d1 42%,#7aa7ff); height:5mm; }
+.cover .orb { position:absolute; width:78mm; height:78mm; border:1px solid rgba(255,255,255,.16); border-radius:50%; right:12mm; top:25mm; }
+.cover .orb::after { content:""; position:absolute; inset:17mm; border:1px solid rgba(255,255,255,.12); border-radius:50%; }
+.kicker { font-size:9pt; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--cyan); }
+.cover .kicker { color:#69e2d9; }
+h1 { font-size:33pt; line-height:1.02; margin:10mm 0 5mm; letter-spacing:-.03em; }
+h2 { font-size:20pt; line-height:1.1; margin:1mm 0 5mm; letter-spacing:-.02em; color:var(--navy); }
+h3 { font-size:12.5pt; margin:4mm 0 1.5mm; color:var(--navy); }
+p { margin:0 0 2.5mm; }
+ul, ol { margin:1.5mm 0 3mm 5mm; padding-left:4mm; }
+li { margin:0 0 1.2mm; }
+strong { color:var(--navy); }
+.cover strong { color:#fff; }
+.lede { font-size:15pt; line-height:1.45; max-width:150mm; color:#dcebf6; }
+.meta { margin-top:16mm; display:grid; grid-template-columns:1fr 1fr; gap:4mm; max-width:125mm; }
+.meta div { border-top:1px solid rgba(255,255,255,.28); padding-top:2.5mm; }
+.meta b { display:block; color:#70e5dc; font-size:8.5pt; text-transform:uppercase; letter-spacing:.08em; margin-bottom:1mm; }
+.decision { margin-top:22mm; max-width:150mm; padding:7mm; border-left:2mm solid var(--cyan); background:rgba(255,255,255,.08); font-size:12pt; line-height:1.45; }
+.header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:3mm; margin-bottom:4mm; }
+.header .chapter { color:var(--blue); font-size:8.5pt; text-transform:uppercase; letter-spacing:.1em; font-weight:700; }
+.header .short { color:var(--muted); font-size:8.5pt; }
+.footer { position:absolute; bottom:7mm; left:17mm; right:17mm; display:flex; justify-content:space-between; color:#738193; font-size:8pt; border-top:1px solid var(--line); padding-top:2mm; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:4mm; }
+.card { border:1px solid var(--line); border-radius:3mm; padding:4mm; background:#fff; }
+.card.tint { background:var(--wash); }
+.card h3 { margin-top:0; }
+.callout { border-left:1.5mm solid var(--blue); background:#eef5fd; padding:4mm 5mm; margin:4mm 0; }
+.callout.warn { border-color:var(--amber); background:#fff6e9; }
+.callout.danger { border-color:var(--red); background:#fff0f0; }
+.callout.good { border-color:var(--green); background:#edf8f2; }
+.small { font-size:9.2pt; color:var(--muted); }
+.mini { font-size:8.5pt; }
+.badge { display:inline-block; border:1px solid currentColor; border-radius:999px; padding:.5mm 2mm; font-size:8pt; font-weight:700; letter-spacing:.03em; }
+.public { color:var(--blue); } .private { color:var(--amber); } .secret { color:var(--red); }
+table { width:100%; border-collapse:collapse; margin:3mm 0 5mm; font-size:9.2pt; }
+th { text-align:left; padding:2.2mm; background:var(--navy); color:#fff; font-size:8.4pt; text-transform:uppercase; letter-spacing:.04em; }
+td { padding:2.3mm; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:nth-child(even) td { background:#f8fafc; }
+code, pre { font-family:'Liberation Mono',monospace; }
+code { font-size:.9em; background:#eef2f5; border-radius:1mm; padding:.2mm 1mm; color:#173653; }
+pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:8.3pt; line-height:1.38; background:#0d1b2a; color:#e7f0f7; border-radius:2.5mm; padding:4mm; margin:3mm 0 4mm; }
+pre .c { color:#81c9c5; }
+.diagram { border:1px solid var(--line); border-radius:3mm; padding:5mm; background:var(--wash); margin:4mm 0 5mm; }
+.flow { display:grid; grid-template-columns:1fr 11mm 1.2fr 11mm 1fr; align-items:center; gap:2mm; }
+.node { background:#fff; border:1px solid #b8c5d0; border-radius:3mm; padding:4mm 3mm; text-align:center; min-height:26mm; display:flex; flex-direction:column; justify-content:center; }
+.node b { display:block; margin-bottom:1mm; }
+.arrow { text-align:center; color:var(--blue); font-size:20pt; font-weight:700; }
+.lanes { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.lane { border-radius:3mm; padding:5mm; border-top:2mm solid; }
+.lane.publiclane { border-color:var(--blue); background:#eef5fd; }
+.lane.privatelane { border-color:var(--amber); background:#fff6e9; }
+.lane h3 { margin:0 0 3mm; }
+.stack { display:grid; grid-template-columns:34mm 1fr; border:1px solid var(--line); border-radius:2mm; overflow:hidden; margin:2mm 0; }
+.stack dt { margin:0; padding:2.2mm 3mm; background:#edf2f6; font-weight:700; }
+.stack dd { margin:0; padding:2.2mm 3mm; border-left:1px solid var(--line); }
+.step { display:grid; grid-template-columns:9mm 1fr; gap:3mm; margin:3mm 0; }
+.step .num { width:8mm; height:8mm; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-size:8.5pt; font-weight:700; }
+.rule { border-top:1px solid var(--line); margin:5mm 0; }
+.toc { columns:2; column-gap:8mm; }
+.toc p { break-inside:avoid; display:flex; gap:3mm; margin-bottom:3mm; }
+.toc b { color:var(--blue); min-width:7mm; }
+.matrix td:first-child { font-weight:700; color:var(--navy); width:31mm; }
+.risk-high { color:var(--red); font-weight:700; }
+.risk-med { color:var(--amber); font-weight:700; }
+.risk-low { color:var(--green); font-weight:700; }
+.checklist { list-style:none; margin-left:0; padding-left:0; }
+.checklist li { padding-left:6mm; position:relative; }
+.checklist li::before { content:"□"; position:absolute; left:0; color:var(--blue); font-weight:700; }
+a { color:var(--blue); text-decoration:none; }
+.ref { font-size:8.5pt; line-height:1.32; overflow-wrap:anywhere; }
+.compact table { margin:2mm 0 3mm; }
+.compact td { padding:1.8mm 2.3mm; }
+.compact .callout { margin:3mm 0; padding:3.5mm 5mm; }
+@media print { html,body { background:#fff; } }
+</style>
+</head>
+<body>
+<section class="page cover">
+  <div class="orb"></div>
+  <div class="kicker">Architecture and security design</div>
+  <h1>GitHub Agent Bus</h1>
+  <p class="lede">A durable, auditable communication layer for Nelson's agents using GitHub Issues, comments, webhooks, and the GitHub CLI/API.</p>
+  <div class="meta">
+    <div><b>Status</b>Proposed design</div>
+    <div><b>Version</b>0.1</div>
+    <div><b>Date</b>September 25, 2026</div>
+    <div><b>Primary owner</b>SAO supervisor</div>
+  </div>
+  <div class="decision"><strong>Decision:</strong> Use GitHub as the agents' durable coordination plane, split into a public lane and a private lane. Keep raw credentials, personal data, and highest-sensitivity payloads outside GitHub; pass references or recipient-encrypted blobs instead.</div>
+  <div class="footer" style="color:#9fb2c3;border-color:rgba(255,255,255,.18)"><span>GitHub Agent Bus</span><span>1 / 14</span></div>
+</section>
+
+<section class="page">
+  <div class="header"><div><div class="chapter">01 / Executive decision</div><h2>GitHub is the record; SAO remains the authority</h2></div><div class="short">Design specification v0.1</div></div>
+  <div class="callout good"><strong>Recommendation.</strong> Build a two-lane bus now, starting with a small private pilot. Use GitHub Issues as task threads, comments as events, labels as routing metadata, and webhooks as the primary trigger. Keep Telegram as the human-in-the-loop control channel and SAO as the policy and execution boundary.</div>
+  <h3>Why this fits</h3>
+  <div class="grid3">
+    <div class="card"><h3>Durable</h3><p>Messages, decisions, code links, and outcomes remain searchable and reviewable.</p></div>
+    <div class="card"><h3>Native</h3><p>Agents can use the existing <code>gh</code> CLI or REST API without a bespoke chat stack.</p></div>
+    <div class="card"><h3>Governable</h3><p>Repository access, labels, issue state, and approvals map cleanly to SAO controls.</p></div>
+  </div>
+  <h3>The boundary</h3>
+  <table>
+    <thead><tr><th>GitHub bus does</th><th>GitHub bus does not</th></tr></thead>
+    <tbody>
+      <tr><td>Queue work and route agents</td><td>Replace the secret manager</td></tr>
+      <tr><td>Preserve task conversations</td><td>Execute arbitrary instructions directly</td></tr>
+      <tr><td>Link commits, pull requests, and artifacts</td><td>Carry raw credentials or recovery codes</td></tr>
+      <tr><td>Provide human-readable audit history</td><td>Replace Telegram approvals or SAO policy</td></tr>
+    </tbody>
+  </table>
+  <h3>Contents</h3>
+  <div class="toc small">
+    <p><b>02</b><span>Scope and principles</span></p><p><b>03</b><span>System architecture</span></p>
+    <p><b>04</b><span>Protocol and state model</span></p><p><b>05</b><span>Public lane</span></p>
+    <p><b>06</b><span>Private and encrypted lanes</span></p><p><b>07</b><span>Identity and authorization</span></p>
+    <p><b>08</b><span>Delivery and reliability</span></p><p><b>09</b><span>CLI/API contract</span></p>
+    <p><b>10</b><span>Threat model</span></p><p><b>11</b><span>Operations and rollout</span></p>
+    <p><b>12</b><span>Decisions and references</span></p>
+  </div>
+  <div class="footer"><span>GitHub Agent Bus</span><span>2 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">02 / Scope</div><h2>Separate coordination from execution</h2></div><div class="short">Trust boundary</div></div>
+  <p>The bus is an event log and work queue. A message may request an action, but it never grants authority by itself. SAO evaluates the sender, lane, task type, repository policy, and required human approval before dispatching a worker.</p>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node"><b>Agent or human</b><span class="small">Creates issue or comment</span></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node"><b>GitHub bus</b><span class="small">Durable event + routing metadata</span></div>
+      <div class="arrow">&#8594;</div>
+      <div class="node"><b>SAO policy gate</b><span class="small">Validate, authorize, dispatch</span></div>
+    </div>
+    <p class="mini" style="text-align:center;margin:3mm 0 0">Figure 1. GitHub carries intent; SAO decides whether and how the intent is executed.</p>
+  </div>
+  <h3>Goals</h3>
+  <ul>
+    <li><strong>Human-readable coordination:</strong> Nelson can inspect every task without decoding a proprietary queue.</li>
+    <li><strong>Machine-readable events:</strong> Agents parse a stable envelope instead of scraping prose.</li>
+    <li><strong>Least privilege:</strong> Each agent can see and mutate only its assigned lanes.</li>
+    <li><strong>Replay and recovery:</strong> A missed webhook can be reconciled from GitHub state.</li>
+    <li><strong>Code-native context:</strong> Tasks can point to repositories, commits, files, pull requests, and checks.</li>
+  </ul>
+  <h3>Non-goals</h3>
+  <ul>
+    <li>Low-latency streaming chat or high-volume telemetry.</li>
+    <li>Storage for credentials, private keys, personal records, or authentication material.</li>
+    <li>Automatic trust of issue bodies, comments, code, or attachments.</li>
+    <li>Replacing source-control workflows: code still moves through commits and pull requests.</li>
+  </ul>
+  <div class="callout warn"><strong>Design rule:</strong> Every issue body, comment, linked file, and webhook payload is untrusted input. Instructions inside them are data until SAO validates the sender and policy allows the requested action.</div>
+  <h3>Operating principles</h3>
+  <div class="grid2 small">
+    <div class="card tint"><strong>One task, one issue.</strong><br>Keep a complete lifecycle in one thread.</div>
+    <div class="card tint"><strong>References over copies.</strong><br>Point to commits and vault objects instead of pasting sensitive material.</div>
+    <div class="card tint"><strong>Idempotent workers.</strong><br>The same delivery may be seen more than once.</div>
+    <div class="card tint"><strong>Fail closed.</strong><br>Unknown sender, schema, or policy means no execution.</div>
+  </div>
+  <div class="footer"><span>GitHub Agent Bus</span><span>3 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">03 / Architecture</div><h2>Two repositories create clean security lanes</h2></div><div class="short">Recommended topology</div></div>
+  <div class="lanes">
+    <div class="lane publiclane"><span class="badge public">PUBLIC</span><h3>agent-bus-public</h3><p>Open-source coordination, public roadmaps, reproducible bug reports, documentation tasks, and discussions safe for anyone to read.</p><p class="small"><strong>Rule:</strong> publishable by default.</p></div>
+    <div class="lane privatelane"><span class="badge private">PRIVATE</span><h3>agent-bus-private</h3><p>Proprietary code coordination, internal incidents, deployment planning, private infrastructure context, and customer-free operational notes.</p><p class="small"><strong>Rule:</strong> least privilege; still no raw secrets.</p></div>
+  </div>
+  <h3>Core components</h3>
+  <dl class="stack"><dt>Ingress</dt><dd>Repository webhooks for <code>issues</code>, <code>issue_comment</code>, and selected pull-request/check events.</dd></dl>
+  <dl class="stack"><dt>Verifier</dt><dd>Checks HTTPS, <code>X-Hub-Signature-256</code>, delivery ID, repository allowlist, sender, schema version, and size limits.</dd></dl>
+  <dl class="stack"><dt>Router</dt><dd>Maps <code>to</code>, labels, and task type to an SAO agent and policy profile.</dd></dl>
+  <dl class="stack"><dt>Queue</dt><dd>Durably records accepted delivery IDs before acknowledging work; execution occurs asynchronously.</dd></dl>
+  <dl class="stack"><dt>Workers</dt><dd>Lupin, Anansi, Astra, Omnissiah, Poirot, Hermes, or other approved agents consume scoped tasks.</dd></dl>
+  <dl class="stack"><dt>Egress</dt><dd>Posts acknowledgement, progress, result, or failure comments through the authorized GitHub identity.</dd></dl>
+  <div class="diagram">
+    <div style="display:grid;grid-template-columns:1fr 12mm 1fr 12mm 1fr;gap:2mm;align-items:center">
+      <div class="node"><b>Public / private repos</b><span class="small">Issues + comments</span></div><div class="arrow">&#8594;</div>
+      <div class="node"><b>n8n webhook ingress</b><span class="small">Verify + enqueue</span></div><div class="arrow">&#8594;</div>
+      <div class="node"><b>SAO / Legion</b><span class="small">Policy + agent dispatch</span></div>
+    </div>
+    <p class="mini" style="text-align:center;margin:3mm 0 0">Figure 2. n8n is transport glue; SAO remains the supervisor and verifier.</p>
+  </div>
+  <h3>Why not one repository with labels?</h3>
+  <p>Labels are routing metadata, not access controls. A repository split gives an enforceable visibility boundary and reduces the chance that a sensitive thread is accidentally opened publicly.</p>
+  <div class="footer"><span>GitHub Agent Bus</span><span>4 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">04 / Protocol</div><h2>A versioned envelope makes Issues a real bus</h2></div><div class="short">Message contract</div></div>
+  <p>Use the issue title for humans and a fenced JSON envelope at the top of the body for machines. Free-form Markdown follows it. Comments that change state use the same envelope with a new event ID.</p>
+<pre>{
+  "schema": "agent-bus/v1",
+  "id": "msg_01H...",
+  "thread_id": "task_01H...",
+  "from": "agent:anansi",
+  "to": ["agent:lupin"],
+  "type": "task.request",
+  "classification": "internal",
+  "created_at": "2026-09-25T07:00:00Z",
+  "correlation_id": "build_...",
+  "reply_to": null,
+  "payload": {
+    "summary": "Review parser change",
+    "repo_ref": "owner/repo@commit-sha",
+    "acceptance": ["tests pass", "no new network calls"]
+  },
+  "payload_ref": null,
+  "requires_approval": false
+}</pre>
+  <div class="grid2 small">
+    <div>
+      <h3>Required fields</h3>
+      <ul><li><code>schema</code> and globally unique <code>id</code></li><li><code>thread_id</code>, <code>from</code>, and <code>to</code></li><li><code>type</code>, <code>classification</code>, and <code>created_at</code></li><li>One of <code>payload</code> or <code>payload_ref</code></li></ul>
+    </div>
+    <div>
+      <h3>Canonical event types</h3>
+      <ul><li><code>task.request</code> / <code>task.accepted</code></li><li><code>task.progress</code> / <code>task.completed</code></li><li><code>task.failed</code> / <code>task.cancelled</code></li><li><code>approval.requested</code> / <code>approval.decided</code></li><li><code>broadcast.notice</code></li></ul>
+    </div>
+  </div>
+  <h3>State machine</h3>
+  <div class="diagram small" style="text-align:center"><strong>open</strong> &#8594; acknowledged &#8594; working &#8594; <strong>completed</strong> / blocked / failed / cancelled<br><span class="mini">Issue remains open while work is active. Close only on a terminal event. Reopen only with a new event ID and explanation.</span></div>
+  <h3>Labels are indexes, not truth</h3>
+  <p>Use labels such as <code>to:lupin</code>, <code>type:review</code>, <code>state:working</code>, <code>risk:high</code>, and <code>approval:required</code>. The signed event history is canonical; labels may lag and can be repaired by reconciliation.</p>
+  <div class="footer"><span>GitHub Agent Bus</span><span>5 / 14</span></div>
+</section>
+<section class="page compact">
+  <div class="header"><div><div class="chapter">05 / Public lane</div><h2>Public means safe to quote, index, and fork</h2></div><div class="short">Non-sensitive coordination</div></div>
+  <div class="callout"><strong>Use for:</strong> open-source code tasks, public documentation, reproducible defects without private environment details, public roadmaps, agent research summaries, and status updates intended for community visibility.</div>
+  <h3>Allowed and prohibited content</h3>
+  <table class="matrix">
+    <thead><tr><th>Class</th><th>Examples</th><th>Disposition</th></tr></thead>
+    <tbody>
+      <tr><td>Public</td><td>Open-source issue, public URL, release note</td><td><span class="risk-low">Allow</span></td></tr>
+      <tr><td>Internal</td><td>Private repo name, host inventory, unpublished plan</td><td><span class="risk-med">Move to private lane</span></td></tr>
+      <tr><td>Confidential</td><td>Customer code, private incident evidence, personal data</td><td><span class="risk-high">Private reference only</span></td></tr>
+      <tr><td>Secret</td><td>Token, password, key, cookie, recovery code</td><td><span class="risk-high">Never store on bus</span></td></tr>
+    </tbody>
+  </table>
+  <h3>Guardrails</h3>
+  <ul>
+    <li><strong>Preflight classifier:</strong> scan outgoing titles, bodies, comments, diffs, and attachment names before calling GitHub.</li>
+    <li><strong>Blocklist plus structure checks:</strong> reject credential-like keys, private IPs, personal identifiers, vault values, and unapproved internal repository references.</li>
+    <li><strong>Secret scanning:</strong> enable GitHub push protection where available, but treat it as defense in depth rather than proof that content is safe. GitHub documents that push protection can block supported secrets in command-line pushes, UI commits, uploads, and REST API requests.[6]</li>
+    <li><strong>Link hygiene:</strong> never place credentials or sensitive identifiers in URLs; URLs are transmitted as soon as fetched.</li>
+    <li><strong>Human review:</strong> require approval for public posts that speak in Nelson's name or expose a new architectural detail.</li>
+  </ul>
+  <h3>Recommended repository policy</h3>
+  <div class="grid2 small">
+    <div class="card tint"><strong>Write access</strong><br>Only the bus GitHub App and approved maintainers.</div>
+    <div class="card tint"><strong>External issues</strong><br>Use a separate intake repo or templates; do not let arbitrary public issues dispatch agents.</div>
+    <div class="card tint"><strong>Actions</strong><br>Read-only by default. Pin actions by commit SHA.</div>
+    <div class="card tint"><strong>Branches</strong><br>Protect default branch; require review for policy changes.</div>
+  </div>
+  <div class="callout danger"><strong>Critical distinction:</strong> Non-sensitive code is not the same as non-sensitive operations. A harmless public codebase can still produce sensitive logs, deployment details, customer data, or credentials during debugging.</div>
+  <div class="footer"><span>GitHub Agent Bus</span><span>6 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">06 / Sensitive content</div><h2>Private repos protect access; encryption protects payloads</h2></div><div class="short">Three handling levels</div></div>
+  <table>
+    <thead><tr><th>Level</th><th>Storage pattern</th><th>Suitable for</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge private">PRIVATE</span></td><td>Plaintext in private bus</td><td>Proprietary plans, private code references, internal status</td></tr>
+      <tr><td><span class="badge secret">REFERENCE</span></td><td>Opaque pointer only</td><td>Credentials, personal data, sensitive logs, large artifacts</td></tr>
+      <tr><td><span class="badge secret">ENCRYPTED</span></td><td>Recipient-encrypted blob</td><td>Small payload that must traverse GitHub but remain unreadable there</td></tr>
+    </tbody>
+  </table>
+  <h3>Preferred pattern: reference, do not copy</h3>
+<pre>{
+  "classification": "secret",
+  "payload": null,
+  "payload_ref": {
+    "scheme": "vault",
+    "locator": "vault://agent-bus/task_01H.../input",
+    "digest": "sha256:...",
+    "expires_at": "2026-09-25T09:00:00Z"
+  }
+}</pre>
+  <p>The recipient resolves the object through its own identity and authorization path. The bus reveals that an object exists, who it is for, and when it expires, but not the object itself. The locator must not contain a credential or signed access URL.</p>
+  <h3>Encrypted payload option</h3>
+  <p>Encrypt to the recipient agent's public key using an audited envelope format such as age or SOPS. Include algorithm, key ID, nonce or envelope metadata, ciphertext, and plaintext digest only when the chosen scheme requires them. Sign the message or rely on the authenticated GitHub App identity plus webhook validation.</p>
+  <div class="callout warn"><strong>Metadata still leaks:</strong> a private or encrypted message can expose timing, repository, participants, labels, size, and activity patterns. Do not use GitHub for data whose mere existence or relationship is highly sensitive.</div>
+  <h3>Sensitive code</h3>
+  <ul>
+    <li>Store proprietary source in its normal private code repository, not pasted into bus comments.</li>
+    <li>Send an immutable reference: repository, commit SHA, path, and optional content digest.</li>
+    <li>Grant the worker read access only to that repository and only for the task's duration where practical.</li>
+    <li>For exceptionally sensitive source, keep it off GitHub and send only a vault/object-store reference through the private lane.</li>
+  </ul>
+  <p class="small">GitHub advises using minimum permissions and a secure shared system for credentials rather than placing credentials in code or messages.[5]</p>
+  <div class="footer"><span>GitHub Agent Bus</span><span>7 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">07 / Identity</div><h2>A GitHub App is the production identity</h2></div><div class="short">Authentication and authorization</div></div>
+  <div class="grid2">
+    <div class="card"><span class="badge public">PILOT</span><h3>Fine-grained PAT</h3><p>Fastest path for one or two agents. Scope the token to selected bus repositories, set an expiration, and grant only Issues read/write plus Metadata read.</p><p class="small">Do not share one token across agents. Rotation and attribution become weak.</p></div>
+    <div class="card tint"><span class="badge private">PRODUCTION</span><h3>GitHub App</h3><p>Install only on approved repositories. Request targeted repository permissions. Mint short-lived installation tokens for the current job.</p><p class="small">GitHub App installation tokens expire after one hour and can be narrowed to repositories and permissions within the app's grant.[4]</p></div>
+  </div>
+  <h3>Minimum permissions</h3>
+  <table>
+    <thead><tr><th>Permission</th><th>Level</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>Metadata</td><td>Read</td><td>Repository identity and basic context</td></tr>
+      <tr><td>Issues</td><td>Read/write</td><td>Create tasks, post events, label, close</td></tr>
+      <tr><td>Contents</td><td>None by default</td><td>Add read only for code-reference workers</td></tr>
+      <tr><td>Pull requests</td><td>None by default</td><td>Add read/write only for review agents</td></tr>
+      <tr><td>Actions</td><td>None by default</td><td>Add read only when status is required</td></tr>
+      <tr><td>Administration</td><td>None</td><td>Bus agents should not manage repository settings</td></tr>
+    </tbody>
+  </table>
+  <p class="small">GitHub's permission tables show that creating issues and comments requires Issues write access for fine-grained tokens, while webhook subscriptions can use Issues read access.[2][3]</p>
+  <h3>Identity model</h3>
+  <ul>
+    <li><strong>One app, logical agent IDs:</strong> simplest. All GitHub actions appear as one bot; message envelopes carry agent identity. SAO must prevent spoofed <code>from</code> values.</li>
+    <li><strong>One app per agent:</strong> strongest attribution and isolation, but heavier key and installation management.</li>
+    <li><strong>Recommended:</strong> one bus app for transport plus SAO-signed logical identities now; split high-risk agents into separate apps later.</li>
+  </ul>
+  <div class="callout danger"><strong>Never expose credentials in process arguments, issue text, comments, logs, or committed configuration.</strong> Keep app private keys and webhook secrets in the approved secret store; inject them only into the process that needs them.</div>
+  <div class="footer"><span>GitHub Agent Bus</span><span>8 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">08 / Delivery</div><h2>Webhooks first, reconciliation second</h2></div><div class="short">Reliability model</div></div>
+  <div class="step"><div class="num">1</div><div><strong>Receive.</strong> Accept only HTTPS deliveries from configured repositories and event types.</div></div>
+  <div class="step"><div class="num">2</div><div><strong>Verify.</strong> Validate the raw request body against <code>X-Hub-Signature-256</code> using constant-time comparison before parsing or acting.[1]</div></div>
+  <div class="step"><div class="num">3</div><div><strong>Deduplicate.</strong> Insert the GitHub delivery ID into durable storage with a unique constraint. If it already exists, return success without re-running work.</div></div>
+  <div class="step"><div class="num">4</div><div><strong>Acknowledge transport.</strong> Return a 2xx response quickly, after durable enqueue. GitHub recommends responding within ten seconds.[8]</div></div>
+  <div class="step"><div class="num">5</div><div><strong>Authorize and execute.</strong> SAO validates schema, sender, lane, permissions, approvals, and task policy, then dispatches asynchronously.</div></div>
+  <div class="step"><div class="num">6</div><div><strong>Record outcome.</strong> Post a terminal event and close the issue only after independently verified completion.</div></div>
+  <h3>Ordering and replay</h3>
+  <p>Do not assume webhook order. GitHub notes that deliveries can arrive out of order, so consumers must use event timestamps, causal links, and the issue timeline rather than arrival time alone.[8] Each handler must be idempotent on <code>id</code> and GitHub delivery ID.</p>
+  <h3>Reconciliation loop</h3>
+  <ul>
+    <li>Every 5-15 minutes, query open issues labeled <code>state:queued</code> or <code>state:working</code> and compare them with the local queue.</li>
+    <li>Use conditional requests where possible and back off on rate-limit responses.</li>
+    <li>Never run a second copy merely because an acknowledgement comment is delayed.</li>
+  </ul>
+  <div class="callout"><strong>Capacity:</strong> authenticated REST requests normally share a primary allowance of 5,000 requests per hour for a user/token context, with additional secondary limits. Webhooks prevent wasteful polling; rate-limit headers remain the source of truth.[7]</div>
+  <h3>Failure semantics</h3>
+  <table>
+    <thead><tr><th>Failure</th><th>Bus response</th><th>Execution</th></tr></thead>
+    <tbody>
+      <tr><td>Bad signature</td><td>Reject and alert</td><td>None</td></tr>
+      <tr><td>Unknown schema</td><td>Comment blocked</td><td>None</td></tr>
+      <tr><td>Policy denied</td><td>Record reason code</td><td>None</td></tr>
+      <tr><td>Transient worker error</td><td>Retry with cap</td><td>Idempotent retry</td></tr>
+      <tr><td>Rate limited</td><td>Stop provider calls</td><td>Resume only after allowed</td></tr>
+    </tbody>
+  </table>
+  <div class="footer"><span>GitHub Agent Bus</span><span>9 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">09A / Interface</div><h2>CLI operations cover the task lifecycle</h2></div><div class="short">Send, read, and claim</div></div>
+  <h3>1. Send a task</h3>
+<pre><span class="c"># Body is generated locally from a validated template.</span>
+gh issue create --repo OWNER/agent-bus-private \
+  --title "[task] Review parser change" \
+  --body-file message.md \
+  --label "to:lupin,type:review,state:queued"</pre>
+  <h3>2. Read pending work</h3>
+<pre>gh issue list --repo OWNER/agent-bus-private \
+  --state open --label "to:lupin,state:queued" \
+  --json number,title,body,labels,author,updatedAt</pre>
+  <h3>3. Acknowledge and claim</h3>
+<pre>gh issue comment ISSUE --repo OWNER/agent-bus-private \
+  --body-file accepted-event.md
+
+gh issue edit ISSUE --repo OWNER/agent-bus-private \
+  --remove-label "state:queued" --add-label "state:working"</pre>
+  <div class="callout warn"><strong>Shell safety:</strong> build bodies in files or standard input; do not interpolate untrusted issue text into shell commands. Use structured arguments, strict JSON parsing, and allowlisted label values.</div>
+  <h3>Consumer rule</h3>
+  <p>The CLI is a transport client, not a trust boundary. Before an event changes local state, the consumer independently checks the repository, author, message schema, event ID, classification, and SAO policy.</p>
+  <div class="footer"><span>GitHub Agent Bus</span><span>10 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">09B / Interface</div><h2>Results stay structured and readable</h2></div><div class="short">Complete, fail, and organize</div></div>
+  <h3>4. Complete or fail</h3>
+<pre>gh issue comment ISSUE --repo OWNER/agent-bus-private \
+  --body-file terminal-event.md
+
+gh issue close ISSUE --repo OWNER/agent-bus-private \
+  --reason completed</pre>
+  <h3>5. Use REST when precise response handling matters</h3>
+<pre>gh api --method POST \
+  repos/OWNER/agent-bus-private/issues/ISSUE/comments \
+  --input terminal-event.json</pre>
+  <h3>Repository conventions</h3>
+  <div class="grid2 small">
+    <div class="card tint"><strong>Issue title</strong><br><code>[type] short human summary</code></div>
+    <div class="card tint"><strong>Assignee</strong><br>Optional human owner, not primary routing</div>
+    <div class="card tint"><strong>Labels</strong><br><code>to:*</code>, <code>type:*</code>, <code>state:*</code>, <code>risk:*</code></div>
+    <div class="card tint"><strong>Milestone</strong><br>Release or campaign grouping only</div>
+  </div>
+  <h3>Response rules</h3>
+  <ul>
+    <li>Every acknowledgement and terminal comment contains a new event ID and the original <code>thread_id</code>.</li>
+    <li>Results link to an immutable commit, pull request, artifact digest, or external object reference.</li>
+    <li>Progress comments are sparse: milestone changes, blockers, approval requests, and terminal outcomes only.</li>
+    <li>A completed event states the checks performed; it does not claim success from a queued or running status.</li>
+  </ul>
+  <div class="callout"><strong>Human readability:</strong> keep the summary and outcome in normal Markdown beneath the envelope. Nelson should be able to follow the thread without opening raw JSON.</div>
+  <div class="footer"><span>GitHub Agent Bus</span><span>11 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">10 / Security</div><h2>Private is a control, not a guarantee</h2></div><div class="short">Threat model</div></div>
+  <table class="matrix">
+    <thead><tr><th>Threat</th><th>Primary control</th><th>Residual risk</th></tr></thead>
+    <tbody>
+      <tr><td>Prompt injection</td><td>Treat all GitHub content as data; policy gate before tools</td><td class="risk-med">Compromised allowed sender</td></tr>
+      <tr><td>Token theft</td><td>Short-lived app tokens; secret store; rotation</td><td class="risk-med">Active session window</td></tr>
+      <tr><td>Cross-lane leak</td><td>Separate repos; outbound classifier; deny-by-default routing</td><td class="risk-med">Misclassification</td></tr>
+      <tr><td>Replay / duplicate</td><td>Delivery-ID and event-ID uniqueness</td><td class="risk-low">Store outage</td></tr>
+      <tr><td>Forged webhook</td><td>HMAC-SHA256 verification over raw body</td><td class="risk-low">Secret compromise</td></tr>
+      <tr><td>Malicious contributor</td><td>Sender allowlist; no execution from public intake</td><td class="risk-med">Maintainer compromise</td></tr>
+      <tr><td>Destructive task</td><td>SAO policy + human approval + scoped worker</td><td class="risk-med">Policy defect</td></tr>
+      <tr><td>History exposure</td><td>No raw secrets; references; payload encryption</td><td class="risk-med">Metadata exposure</td></tr>
+    </tbody>
+  </table>
+  <h3>Mandatory controls before production</h3>
+  <ul class="checklist">
+    <li>Webhook signature verification using the unmodified request body.</li>
+    <li>Repository, event-type, installation, and sender allowlists.</li>
+    <li>Schema validation with unknown fields rejected or safely ignored by version.</li>
+    <li>Per-agent tool and repository authorization independent of message content.</li>
+    <li>Explicit approval for money movement, public posting, deletion, credential changes, and production deployment.</li>
+    <li>Outbound data-loss-prevention scan before every public or private GitHub write.</li>
+    <li>Secret references resolved only by the intended worker and never echoed into status comments.</li>
+    <li>Emergency stop that disables dispatch while preserving inbound events.</li>
+  </ul>
+  <h3>Retention and deletion</h3>
+  <p>Set a policy by classification: public threads may be permanent; internal coordination can be retained for a defined operational window; confidential payload references should expire quickly. Do not rely on deleting an issue or rewriting Git history as a secrecy mechanism. Once a credential reaches GitHub, treat it as exposed: rotate or revoke it, then remove traces as cleanup.</p>
+  <div class="callout danger"><strong>Hard rule:</strong> raw passwords, API tokens, private keys, session cookies, one-time codes, recovery links, and unredacted personal or customer records never enter either repository.</div>
+  <div class="footer"><span>GitHub Agent Bus</span><span>12 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">11 / Operations</div><h2>Start with one route and earn complexity</h2></div><div class="short">Rollout and governance</div></div>
+  <h3>Phased rollout</h3>
+  <div class="step"><div class="num">0</div><div><strong>Paper test.</strong> Finalize schema, labels, classification rules, approval gates, and agent registry. Create no automation yet.</div></div>
+  <div class="step"><div class="num">1</div><div><strong>Private pilot.</strong> One private bus repo, SAO as sender, one low-risk worker as receiver, webhook ingress through n8n, and no encrypted payloads.</div></div>
+  <div class="step"><div class="num">2</div><div><strong>Reliable transport.</strong> Add durable queueing, deduplication, reconciliation polling, metrics, dead-letter handling, and emergency stop.</div></div>
+  <div class="step"><div class="num">3</div><div><strong>Public lane.</strong> Add outbound classification, review gates, public templates, and a strict allowlist of task types.</div></div>
+  <div class="step"><div class="num">4</div><div><strong>Sensitive references.</strong> Add short-lived vault/object references and per-worker authorization. Add recipient encryption only for a demonstrated need.</div></div>
+  <h3>Pilot acceptance tests</h3>
+  <ul class="checklist">
+    <li>A valid issue reaches exactly one worker and produces one acknowledgement.</li>
+    <li>A duplicate webhook does not duplicate execution or comments.</li>
+    <li>An invalid signature, unknown sender, or malformed envelope executes nothing.</li>
+    <li>An out-of-order progress event cannot overwrite a terminal state.</li>
+    <li>A task requiring approval stops until the correct approval arrives.</li>
+    <li>A secret-shaped test string is blocked from both public and private outbound writes.</li>
+    <li>A missed webhook is recovered by reconciliation without double execution.</li>
+  </ul>
+  <h3>Service indicators</h3>
+  <div class="grid3 small">
+    <div class="card tint"><strong>Delivery</strong><br>Accepted, rejected, duplicate, and replayed events</div>
+    <div class="card tint"><strong>Latency</strong><br>Event-to-acknowledge and event-to-terminal time</div>
+    <div class="card tint"><strong>Safety</strong><br>Policy denials, approval holds, and DLP blocks</div>
+  </div>
+  <h3>Ownership</h3>
+  <p>SAO owns protocol and policy. n8n owns ingress plumbing and queue handoff. Each worker owns only its task adapter. Nelson retains approval authority for consequential actions. Telegram remains the fast control surface; GitHub remains the durable system of record.</p>
+  <div class="footer"><span>GitHub Agent Bus</span><span>13 / 14</span></div>
+</section>
+<section class="page">
+  <div class="header"><div><div class="chapter">12 / Decision record</div><h2>The baseline is ready for a controlled pilot</h2></div><div class="short">Choices and references</div></div>
+  <h3>Decisions adopted in this design</h3>
+  <ul>
+    <li><strong>Transport:</strong> Issues and comments over the GitHub REST API; repository webhooks trigger consumers.</li>
+    <li><strong>Topology:</strong> separate public and private bus repositories.</li>
+    <li><strong>Authority:</strong> GitHub records requests; SAO authorizes and dispatches them.</li>
+    <li><strong>Sensitive data:</strong> proprietary coordination may use the private lane; raw secrets never do.</li>
+    <li><strong>Identity:</strong> fine-grained personal access token for a constrained pilot, then a GitHub App for production.</li>
+    <li><strong>Reliability:</strong> at-least-once delivery with idempotent consumers and periodic reconciliation.</li>
+  </ul>
+  <h3>Open implementation choices</h3>
+  <ol>
+    <li>Repository owner and final names for the public and private lanes.</li>
+    <li>Whether the first pilot routes SAO to Lupin or another low-risk worker.</li>
+    <li>Which secret manager or encrypted object store resolves <code>payload_ref</code>.</li>
+    <li>Retention periods for internal and confidential thread metadata.</li>
+    <li>Whether logical agent events receive an additional SAO signature in v1.</li>
+  </ol>
+  <div class="rule"></div>
+  <h3>Official references</h3>
+  <p class="ref"><strong>[1] Validating webhook deliveries.</strong> GitHub Docs. <a href="https://docs.github.com/en/enterprise-server@3.11/webhooks/using-webhooks/validating-webhook-deliveries">https://docs.github.com/en/enterprise-server@3.11/webhooks/using-webhooks/validating-webhook-deliveries</a></p>
+  <p class="ref"><strong>[2] Permissions required for fine-grained personal access tokens.</strong> GitHub Docs. <a href="https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens">https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens</a></p>
+  <p class="ref"><strong>[3] Webhook events and payloads.</strong> GitHub Docs. <a href="https://docs.github.com/en/webhooks/webhook-events-and-payloads">https://docs.github.com/en/webhooks/webhook-events-and-payloads</a></p>
+  <p class="ref"><strong>[4] Generating an installation access token for a GitHub App.</strong> GitHub Docs. <a href="https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app?search-overlay-open=true">https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app?search-overlay-open=true</a></p>
+  <p class="ref"><strong>[5] Keeping your API credentials secure.</strong> GitHub Docs. <a href="https://docs.github.com/en/enterprise-cloud@latest/rest/authentication/keeping-your-api-credentials-secure">https://docs.github.com/en/enterprise-cloud@latest/rest/authentication/keeping-your-api-credentials-secure</a></p>
+  <p class="ref"><strong>[6] About push protection.</strong> GitHub Docs. <a href="https://docs.github.com/en/code-security/concepts/secret-security/about-push-protection">https://docs.github.com/en/code-security/concepts/secret-security/about-push-protection</a></p>
+  <p class="ref"><strong>[7] Rate limits for the REST API.</strong> GitHub Docs. <a href="https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api">https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api</a></p>
+  <p class="ref"><strong>[8] Troubleshooting webhooks.</strong> GitHub Docs. <a href="https://docs.github.com/en/enterprise-cloud@latest/webhooks/testing-and-troubleshooting-webhooks/troubleshooting-webhooks">https://docs.github.com/en/enterprise-cloud@latest/webhooks/testing-and-troubleshooting-webhooks/troubleshooting-webhooks</a></p>
+  <p class="small" style="margin-top:4mm">Reference links checked September 25, 2026. This document defines the proposed architecture; it does not create repositories, credentials, webhooks, or automations.</p>
+  <div class="footer"><span>GitHub Agent Bus</span><span>14 / 14</span></div>
+</section>
+</body>
+</html>

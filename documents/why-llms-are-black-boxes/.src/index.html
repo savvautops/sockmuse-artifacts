@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why LLMs Are Black Boxes</title>
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+:root{--ink:#13221f;--muted:#53635f;--paper:#f7f4ec;--lime:#c9ff5f;--aqua:#69e0d1;--navy:#102c33;--rust:#e56b4c;--line:#cad5cf;--white:#fff}
+html,body{margin:0;padding:0;background:#dfe5e1;color:var(--ink);font-family:'Noto Sans','Liberation Sans',sans-serif}
+.page{position:relative;width:210mm;min-height:297mm;padding:14mm 20mm 13mm;background:var(--paper);page-break-after:always;overflow:hidden}
+.page:last-child{page-break-after:auto}
+.page.dark{background:var(--navy);color:var(--white)}
+.page-no{position:absolute;right:18mm;bottom:10mm;font-size:8.5pt;letter-spacing:.14em;color:#7a8984}
+.dark .page-no{color:#8fb1ad}
+.kicker{font-size:9pt;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#247d72;margin:0 0 5mm}
+.dark .kicker{color:var(--aqua)}
+h1,h2,h3{margin:0;font-family:'Noto Sans','Liberation Sans',sans-serif;letter-spacing:-.035em}
+h1{font-size:34pt;line-height:1.04;max-width:160mm}
+h2{font-size:24pt;line-height:1.08;margin-bottom:7mm;max-width:165mm}
+h3{font-size:13pt;line-height:1.2;margin-bottom:2mm}
+p{font-size:11pt;line-height:1.55;margin:0 0 4mm} strong{font-weight:700}
+.lede{font-size:16pt;line-height:1.42;max-width:154mm;color:#d6e7e3}
+.bigline{font-size:21pt;line-height:1.32;font-weight:700;letter-spacing:-.025em}
+.small{font-size:9.2pt;line-height:1.45;color:var(--muted)}
+.dark .small{color:#aac4bf}
+.rule{height:1px;background:var(--line);margin:6mm 0}
+.dark .rule{background:#31515a}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7mm}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm}
+.card{border:1px solid var(--line);border-radius:3mm;padding:5mm;background:rgba(255,255,255,.55)}
+.dark .card{border-color:#31515a;background:#173942}
+.callout{border-left:3mm solid var(--rust);padding:4mm 0 4mm 6mm;margin:6mm 0}
+.callout p:last-child{margin-bottom:0}
+.eq{font-family:'Noto Serif','Liberation Serif',serif;font-size:18pt;background:#e9eee9;border-radius:3mm;padding:5mm 6mm;text-align:center;margin:5mm 0}
+.label{font-size:8.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#247d72}
+.term{display:grid;grid-template-columns:34mm 1fr;gap:5mm;padding:3.2mm 0;border-top:1px solid var(--line)}
+ul{padding-left:5mm;margin:2mm 0 4mm}li{font-size:10.7pt;line-height:1.48;margin:0 0 2mm}
+a{color:#176c63;text-decoration:none}.dark a{color:var(--aqua)}
+sup{font-size:8pt;line-height:0}
+.compact p{margin-bottom:2.8mm}.compact .card{padding:4mm}.compact .grid2,.compact .grid3{gap:4mm}.compact li{margin-bottom:1mm}.sources p{margin-bottom:1.5mm;line-height:1.32}
+</style>
+</head>
+<body>
+<section class="page dark">
+  <p class="kicker">an intuitive guide to mechanistic interpretability</p>
+  <h1>can we see what an llm is thinking?</h1>
+  <div style="height:13mm"></div>
+  <p class="lede">we can record every weight, every activation, and every multiplication. so why does the model still feel like a black box?</p>
+  <div style="height:16mm"></div>
+  <svg viewBox="0 0 720 360" width="100%" role="img" aria-label="A visible network of many overlapping signal paths">
+    <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#69e0d1"/><stop offset="1" stop-color="#c9ff5f"/></linearGradient></defs>
+    <g fill="none" stroke="#325560" stroke-width="2" opacity=".9">
+      <path d="M25 180 C150 10 280 350 420 125 S620 230 695 50"/><path d="M25 80 C150 300 300 15 430 250 S600 80 695 300"/>
+      <path d="M25 280 C180 110 260 240 400 175 S580 340 695 155"/><path d="M25 125 C170 210 290 70 415 300 S600 15 695 230"/>
+    </g>
+    <g fill="url(#g)">
+      <circle cx="25" cy="80" r="7"/><circle cx="25" cy="125" r="7"/><circle cx="25" cy="180" r="7"/><circle cx="25" cy="280" r="7"/>
+      <circle cx="175" cy="125" r="7"/><circle cx="175" cy="250" r="7"/><circle cx="350" cy="90" r="7"/><circle cx="350" cy="220" r="7"/>
+      <circle cx="525" cy="110" r="7"/><circle cx="525" cy="275" r="7"/><circle cx="695" cy="50" r="7"/><circle cx="695" cy="155" r="7"/><circle cx="695" cy="230" r="7"/><circle cx="695" cy="300" r="7"/>
+    </g>
+  </svg>
+  <div style="position:absolute;left:20mm;right:40mm;bottom:26mm">
+    <p class="bigline">the black box is not hidden. it is illegible.</p>
+    <p class="small">A step-by-step walk from R<sup>1</sup> to R<sup>4096</sup>, then into the moving internal state of a transformer.</p>
+  </div>
+  <span class="page-no">01</span>
+</section>
+
+<section class="page">
+  <p class="kicker">start with the shape</p>
+  <h2>R<sup>4096</sup> is ordinary space with an unreasonable number of directions</h2>
+  <p>the notation looks intimidating, but the idea is familiar. <strong>R</strong> means the real numbers, the continuous number line. The superscript tells you how many coordinates are needed to locate one point.</p>
+  <div class="grid3" style="margin:8mm 0 7mm">
+    <div class="card"><p class="label">R<sup>1</sup></p><svg viewBox="0 0 180 100" width="100%"><line x1="15" y1="55" x2="165" y2="55" stroke="#13221f" stroke-width="2"/><circle cx="120" cy="55" r="6" fill="#e56b4c"/><text x="110" y="35" font-size="15" fill="#13221f">x</text></svg><p class="small">one number places a point on a line: <strong>(x)</strong>.</p></div>
+    <div class="card"><p class="label">R<sup>2</sup></p><svg viewBox="0 0 180 100" width="100%"><path d="M25 80H165M45 90V10" stroke="#13221f" stroke-width="2"/><circle cx="120" cy="35" r="6" fill="#e56b4c"/></svg><p class="small">two numbers place a point on a plane: <strong>(x, y)</strong>.</p></div>
+    <div class="card"><p class="label">R<sup>3</sup></p><svg viewBox="0 0 180 100" width="100%"><path d="M45 80H165M45 80V10M45 80L125 30" stroke="#13221f" stroke-width="2"/><circle cx="105" cy="42" r="6" fill="#e56b4c"/></svg><p class="small">three numbers place a point in geometric space: <strong>(x, y, z)</strong>.</p></div>
+  </div>
+  <p>nothing magical happens after three dimensions. We lose the ability to draw the whole space, but the arithmetic keeps working. In R<sup>4</sup>, a point has four coordinates. In R<sup>4096</sup>, it has 4,096.</p>
+  <div class="eq">v = [0.17, -1.02, 0.44, ... , 0.08] &isin; R<sup>4096</sup></div>
+  <div class="callout"><p class="bigline">a 4,096-dimensional vector is just a list of 4,096 numbers.</p><p>we cannot picture every axis at once, but we can still measure distance, angle, direction, and change.</p></div>
+  <p class="small">The examples later use 4,096 and 8,192 because those are real hidden dimensions used by LLaMA model sizes, not universal constants for every LLM.<sup>1</sup></p>
+  <span class="page-no">02</span>
+</section>
+<section class="page">
+  <p class="kicker">from token to vector</p>
+  <h2>a token does not carry a tiny dictionary definition</h2>
+  <p>before a language model can process text, its tokenizer splits the text into tokens. A token might be a whole word, part of a word, punctuation, or a byte-like fragment. Each token begins with an <strong>embedding</strong>, a learned vector.</p>
+  <div class="eq">token &rarr; [x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>, ... , x<sub>4096</sub>]</div>
+  <p>it is tempting to ask which coordinate means “animal,” which means “brown,” and which means “subject of the sentence.” That picture is usually wrong. Useful properties are represented by patterns spread across many coordinates, and the same coordinate can participate in many patterns.</p>
+  <div class="grid2" style="margin:7mm 0">
+    <div class="card">
+      <p class="label">same token, different context</p>
+      <p><strong>bank</strong> beside “loan” enters one pattern.</p>
+      <p><strong>bank</strong> beside “river” enters another.</p>
+      <p class="small">The starting token identity is only the first move. Attention lets surrounding tokens reshape the representation.</p>
+    </div>
+    <div class="card">
+      <p class="label">one point becomes a path</p>
+      <svg viewBox="0 0 300 165" width="100%" role="img" aria-label="A point moving through a sequence of layer transformations">
+        <path d="M25 130 C85 15 130 150 185 55 S250 105 280 25" fill="none" stroke="#247d72" stroke-width="4"/>
+        <g fill="#e56b4c"><circle cx="25" cy="130" r="7"/><circle cx="95" cy="63" r="7"/><circle cx="172" cy="75" r="7"/><circle cx="235" cy="65" r="7"/><circle cx="280" cy="25" r="7"/></g>
+        <g font-family="Noto Sans" font-size="12" fill="#53635f"><text x="10" y="153">embed</text><text x="75" y="45">layer 1</text><text x="150" y="100">layer 2</text><text x="250" y="50">layer n</text></g>
+      </svg>
+      <p class="small">At each layer, the token's hidden state is updated. The vector is a moving point, not a fixed label.</p>
+    </div>
+  </div>
+  <h3>the useful intuition</h3>
+  <p>think of the vector as a location in a giant semantic workspace. Nearby directions can correspond to patterns the model has learned to use, but there is no guarantee those patterns line up neatly with words humans would choose.</p>
+  <div class="callout"><p><strong>do not read the vector coordinate by coordinate.</strong> Read it as a whole geometry. Meaning lives in directions, relationships, and transformations.</p></div>
+  <p class="small">The original Transformer describes stacked attention and feed-forward layers operating on fixed-width vector representations.<sup>2</sup></p>
+  <span class="page-no">03</span>
+</section>
+
+<section class="page">
+  <p class="kicker">the machinery</p>
+  <h2>the model repeats simple operations at enormous scale</h2>
+  <p>a transformer layer is built from familiar mathematical parts: matrix multiplication, weighted sums, normalization, nonlinear functions, and residual updates. None is mysterious alone. The complexity comes from repeating them across many tokens, heads, layers, and parameters.</p>
+  <div class="eq">h<sub>l+1</sub> = h<sub>l</sub> + attention(h<sub>l</sub>) + mlp(h<sub>l</sub>)</div>
+  <p class="small" style="text-align:center">This is a conceptual sketch, not the exact equation for every architecture.</p>
+  <div class="grid2" style="margin:7mm 0">
+    <div>
+      <h3>weights</h3>
+      <p>the learned numbers stored in the model. They define how strongly one direction influences another. During ordinary inference, they stay fixed.</p>
+      <h3 style="margin-top:6mm">activations</h3>
+      <p>the temporary numbers produced when a specific prompt passes through those weights. They change with the input and with every layer.</p>
+    </div>
+    <div class="card">
+      <p class="label">one concrete family</p>
+      <div class="term"><strong>LLaMA 7B</strong><span>4,096 dimensions<br>32 layers</span></div>
+      <div class="term"><strong>LLaMA 65B</strong><span>8,192 dimensions<br>80 layers</span></div>
+      <p class="small" style="margin-top:4mm">These published examples make the scale tangible. Other model families choose other widths and depths.<sup>1</sup></p>
+    </div>
+  </div>
+  <p>billions of parameters are not billions of little sentences stored in drawers. They are coefficients inside a distributed computation. For each new token, the network uses them to transform a large field of activations, layer after layer, before producing scores for possible next tokens.</p>
+  <div class="callout"><p class="bigline">the algorithm is inspectable. the emergent organization is not yet readable.</p></div>
+  <span class="page-no">04</span>
+</section>
+<section class="page dark">
+  <p class="kicker">a thought is an event</p>
+  <h2>weights stay put. activations flash into existence.</h2>
+  <p class="lede">the model's durable object is the network of weights. the “thought” you want to inspect is a temporary activation pattern created by one prompt, at one moment, on one forward pass.</p>
+  <div style="height:7mm"></div>
+  <div class="grid3">
+    <div class="card"><p class="label" style="color:#69e0d1">1. input</p><p>tokens enter with embeddings and positional information.</p></div>
+    <div class="card"><p class="label" style="color:#69e0d1">2. transformation</p><p>attention and feed-forward blocks recompute the hidden state.</p></div>
+    <div class="card"><p class="label" style="color:#69e0d1">3. output</p><p>the final state becomes next-token scores, then one token is selected.</p></div>
+  </div>
+  <svg viewBox="0 0 720 280" width="100%" role="img" aria-label="A pulse of activation moving through fixed network layers" style="margin-top:9mm">
+    <g stroke="#41616a" stroke-width="2"><path d="M90 40V240M210 40V240M330 40V240M450 40V240M570 40V240"/></g>
+    <g fill="#44656d"><circle cx="90" cy="75" r="7"/><circle cx="90" cy="140" r="7"/><circle cx="90" cy="205" r="7"/><circle cx="210" cy="75" r="7"/><circle cx="210" cy="140" r="7"/><circle cx="210" cy="205" r="7"/><circle cx="330" cy="75" r="7"/><circle cx="330" cy="140" r="7"/><circle cx="330" cy="205" r="7"/><circle cx="450" cy="75" r="7"/><circle cx="450" cy="140" r="7"/><circle cx="450" cy="205" r="7"/><circle cx="570" cy="75" r="7"/><circle cx="570" cy="140" r="7"/><circle cx="570" cy="205" r="7"/></g>
+    <path d="M35 205 C120 190 135 70 210 75 S300 220 330 140 S405 45 450 75 S525 220 570 140 S635 80 685 95" fill="none" stroke="#c9ff5f" stroke-width="7" stroke-linecap="round"/>
+    <g font-family="Noto Sans" font-size="13" fill="#aac4bf"><text x="65" y="268">layer 1</text><text x="185" y="268">layer 2</text><text x="305" y="268">layer 3</text><text x="425" y="268">layer 4</text><text x="545" y="268">layer n</text></g>
+  </svg>
+  <div class="callout" style="border-color:#69e0d1"><p class="bigline">there is no permanent shelf labeled “what the model believes right now.”</p><p class="small">Capture the activations and you get a numerical snapshot. Run a different prompt, or continue by one token, and the pattern changes.</p></div>
+  <p class="small">“milliseconds” is the right mental model for many deployed inference systems, but wall-clock timing depends on hardware, model size, context length, and serving setup.</p>
+  <span class="page-no">05</span>
+</section>
+<section class="page">
+  <p class="kicker">why it stays illegible, part one</p>
+  <h2>superposition lets many concepts share the same space</h2>
+  <p>suppose a model needs useful features for animals, colors, syntax, places, emotions, programming patterns, and millions of subtler distinctions. Giving every feature its own dedicated coordinate would be wonderfully readable... and terribly wasteful.</p>
+  <p>neural networks appear able to pack more features into a representation than there are clean, independent dimensions. A feature can be encoded as a <strong>direction</strong>, and many such directions can overlap in the same space. This is called <strong>superposition</strong>.<sup>3</sup></p>
+  <div class="grid2" style="margin:7mm 0">
+    <div class="card">
+      <p class="label">the tidy fantasy</p>
+      <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="Three separate concept axes">
+        <path d="M50 170H255M50 170V25M50 170L205 70" stroke="#13221f" stroke-width="2"/>
+        <g font-family="Noto Sans" font-size="13" fill="#53635f"><text x="255" y="175">dog</text><text x="20" y="25">brown</text><text x="205" y="62">plural</text></g>
+      </svg>
+      <p class="small">one axis per concept. Easy to label, but too neat to describe how large models actually organize everything.</p>
+    </div>
+    <div class="card">
+      <p class="label">the packed reality</p>
+      <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="Many overlapping concept directions">
+        <g transform="translate(150 105)" stroke-width="3"><path d="M-105 55L105-55" stroke="#247d72"/><path d="M-95-70L95 70" stroke="#e56b4c"/><path d="M-120 0H120" stroke="#7f55b7"/><path d="M0-88V88" stroke="#2b72b8"/><path d="M-70 82L70-82" stroke="#a68f19"/><path d="M-110-35L110 35" stroke="#4d8c57"/></g>
+      </svg>
+      <p class="small">many useful directions reuse the same coordinates. A single neuron can participate in several features.</p>
+    </div>
+  </div>
+  <h3>why “find the dog neuron” usually fails</h3>
+  <p>the concept of a dog may be distributed across a pattern involving many neurons. Meanwhile, one of those neurons may also contribute to fur, pets, loyalty, or sentence structure depending on context. Anthropic summarizes the problem directly: concepts can span many neurons, and neurons can represent many concepts.<sup>4</sup></p>
+  <div class="callout"><p><strong>the coordinates are visible, but the basis is not privileged.</strong> Human concepts do not arrive pre-aligned with the model's axes.</p></div>
+  <span class="page-no">06</span>
+</section>
+<section class="page">
+  <p class="kicker">why it stays illegible, part two</p>
+  <h2>nonlinear mixing makes the path hard to reverse</h2>
+  <p>if every layer performed only a linear transformation, the whole stack could be collapsed into one big matrix. Transformers do more. Attention routes information between token positions, and feed-forward blocks apply nonlinear gates. A feature can be amplified in one context, suppressed in another, or combined with several others.</p>
+  <div class="grid2" style="margin:7mm 0">
+    <div>
+      <h3>matrix multiplication</h3>
+      <p>rotates, stretches, projects, and mixes directions in vector space.</p>
+      <h3 style="margin-top:6mm">attention</h3>
+      <p>moves information between token positions according to context-dependent weights.</p>
+      <h3 style="margin-top:6mm">nonlinearity</h3>
+      <p>changes what is active based on thresholds and gates, so the result is not a simple sum you can unwind.</p>
+    </div>
+    <div class="card">
+      <p class="label">the paint analogy</p>
+      <svg viewBox="0 0 320 240" width="100%" role="img" aria-label="Separate colors mixing into a new color">
+        <circle cx="85" cy="72" r="40" fill="#69e0d1" opacity=".9"/><circle cx="160" cy="72" r="40" fill="#e56b4c" opacity=".86"/><circle cx="235" cy="72" r="40" fill="#c9ff5f" opacity=".86"/>
+        <path d="M70 125 C95 170 115 176 160 185 C205 176 225 170 250 125" fill="#6b7f58"/>
+        <path d="M75 120 C105 142 215 142 245 120" fill="none" stroke="#13221f" stroke-width="3"/>
+      </svg>
+      <p>once three colors are mixed, knowing the final shade does not tell you the exact motion of every drop.</p>
+    </div>
+  </div>
+  <p>now repeat the process across dozens of layers. A clean story such as “this neuron recognized a dog, so that neuron chose the word bark” is usually too simple. The causal chain is a web of interacting contributions.</p>
+  <div class="callout"><p class="bigline">tracing a decision backward is less like reading code and more like unmixing paint.</p></div>
+  <p>the program itself is explicit. We know the equations. What we do not have is a compact translation from billions of numerical interactions into a faithful human explanation.</p>
+  <span class="page-no">07</span>
+</section>
+<section class="page compact">
+  <p class="kicker">what researchers can do</p>
+  <h2>interpretability finds real mechanisms, not a complete transcript</h2>
+  <p>the field is not starting from zero. Researchers can record activations, intervene on them, train sparse dictionaries that recover more interpretable features, and trace local circuits that influence an output.</p>
+  <div class="grid2" style="margin:7mm 0">
+    <div class="card"><h3>feature dictionaries</h3><p>Methods such as sparse autoencoders look for recurring activation patterns that behave more like human-readable features than individual neurons do.</p></div>
+    <div class="card"><h3>causal interventions</h3><p>Researchers can suppress, amplify, or inject a feature and observe whether the model's behavior changes in the predicted way.</p></div>
+    <div class="card"><h3>circuit tracing</h3><p>Attribution graphs can approximate how features pass influence through a model for a particular prompt and output.</p></div>
+    <div class="card"><h3>behavioral experiments</h3><p>Carefully designed prompts reveal capabilities and failure modes, though behavior alone does not expose the underlying mechanism.</p></div>
+  </div>
+  <p>these tools have produced striking case studies. Anthropic reported tracing mechanisms involved in planning rhymes, multilingual concept sharing, arithmetic, and explanations that do not faithfully reflect the model's internal route.<sup>5</sup></p>
+  <p>but a local explanation is not the same as a complete one. Interpretability systems often replace part of the original computation with an easier-to-read approximation. They may recover some active features while missing others. The graph for one prompt does not automatically explain every prompt.</p>
+  <div class="callout"><p><strong>the honest status:</strong> we have microscopes, probes, and partial maps. We do not yet have a full source-code-level explanation of what a frontier LLM computes.</p></div>
+  <h3>what would “solved” look like?</h3>
+  <ul>
+    <li>Faithful explanations that preserve the model's actual causal route.</li>
+    <li>Coverage broad enough to audit unfamiliar prompts, not only curated examples.</li>
+    <li>Tools that scale with model size without creating a second black box.</li>
+    <li>Predictions that survive intervention, replication, and adversarial testing.</li>
+  </ul>
+  <span class="page-no">08</span>
+</section>
+<section class="page dark compact">
+  <p class="kicker">the clean conclusion</p>
+  <h2>we can observe everything and understand almost nothing</h2>
+  <p class="lede">that sentence is deliberately sharp, but it captures the gap. The obstacle is not secret code, quantum physics, or a hidden soul inside the machine.</p>
+  <div style="height:5mm"></div>
+  <div class="grid3">
+    <div class="card"><p class="label" style="color:#69e0d1">scale</p><p>billions of learned parameters and vast numbers of intermediate calculations.</p></div>
+    <div class="card"><p class="label" style="color:#69e0d1">distribution</p><p>concepts spread across patterns instead of living in one readable location.</p></div>
+    <div class="card"><p class="label" style="color:#69e0d1">dynamics</p><p>the relevant internal state is rebuilt for each input and changes token by token.</p></div>
+  </div>
+  <div class="callout" style="border-color:#c9ff5f;margin-top:9mm"><p class="bigline">the mystery is scale and distributed representation... not magic.</p></div>
+  <p>machine interpretability is genuinely unsolved. That does not mean it is impossible. It means we are still inventing the language, instruments, and tests needed to translate a moving geometry into a trustworthy explanation.</p>
+  <div class="rule"></div>
+  <p class="label" style="color:#69e0d1">five ideas to keep</p>
+  <ol style="padding-left:6mm;margin:3mm 0 7mm">
+    <li>R<sup>4096</sup> is a list of 4,096 coordinates, not a mystical realm.</li>
+    <li>A token's vector changes as context moves through the layers.</li>
+    <li>Weights persist; activations are temporary and input-specific.</li>
+    <li>Superposition and nonlinear mixing make direct reading unreliable.</li>
+    <li>Interpretability has real tools and results, but no complete decoder ring.</li>
+  </ol>
+  <p class="label" style="color:#69e0d1">sources</p>
+  <div class="sources"><p class="small"><sup>1</sup> Touvron et al., <a href="https://arxiv.org/pdf/2302.13971.pdf">LLaMA: Open and Efficient Foundation Language Models</a>, Table 2.</p>
+  <p class="small"><sup>2</sup> Vaswani et al., <a href="http://arxiv.org/pdf/1706.03762v1">Attention Is All You Need</a>.</p>
+  <p class="small"><sup>3</sup> Elhage et al., <a href="https://transformer-circuits.pub/2022/toy_model/index.html">Toy Models of Superposition</a>.</p>
+  <p class="small"><sup>4</sup> Anthropic, <a href="https://www.anthropic.com/research/mapping-mind-language-model">Mapping the mind of a large language model</a>.</p>
+  <p class="small"><sup>5</sup> Anthropic, <a href="https://www.anthropic.com/research/tracing-thoughts-language-model?_bhlid=e9b7dba90bbc31a8b16d2548c40fff0029bc820a">Tracing the thoughts of a large language model</a>.</p></div>
+  <span class="page-no">09</span>
+</section>
+</body>
+</html>

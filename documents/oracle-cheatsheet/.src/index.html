@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oracle Cloud Infrastructure - Practical VPS Cheatsheet</title>
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+:root{--ink:#18222b;--muted:#5c6770;--line:#d9dde1;--paper:#fff;--wash:#f4f6f7;--red:#c74634;--red2:#8f2f23;--navy:#13293d;--teal:#177e89;--amber:#f3b61f;--green:#2f855a}
+html,body{margin:0;background:#cfd4d7;color:var(--ink);font-family:'Liberation Sans','Noto Sans',sans-serif;font-size:10.2pt;line-height:1.38}
+.page{position:relative;width:210mm;height:297mm;min-height:297mm;padding:16mm 17mm 15mm;background:var(--paper);overflow:hidden;page-break-after:always}
+.page:last-child{page-break-after:auto}
+.header{height:9mm;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:.4mm solid var(--line);color:var(--muted);font-size:8.5pt;letter-spacing:.02em}
+.header b{color:var(--red);letter-spacing:.08em;text-transform:uppercase}
+.footer{position:absolute;left:17mm;right:17mm;bottom:7mm;display:flex;justify-content:space-between;border-top:.35mm solid var(--line);padding-top:2mm;color:var(--muted);font-size:8pt}
+h1{font-size:27pt;line-height:1.04;margin:0 0 4mm;letter-spacing:-.025em;color:var(--navy)}
+h2{font-size:19pt;line-height:1.08;margin:6mm 0 4mm;color:var(--navy);letter-spacing:-.015em}
+h3{font-size:11.6pt;margin:0 0 1.8mm;color:var(--navy)}
+p{margin:0 0 3mm}ul,ol{margin:1.5mm 0 3mm;padding-left:5mm}li{margin:0 0 1.4mm}
+strong{color:#111b22}.kicker{color:var(--red);text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-size:9pt;margin-top:9mm}
+.dek{font-size:13pt;line-height:1.45;color:#35424b;max-width:155mm}.rule{height:1.8mm;background:linear-gradient(90deg,var(--red) 0 34%,var(--amber) 34% 40%,var(--navy) 40% 100%);margin:8mm 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5mm}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+.card{border:.35mm solid var(--line);border-radius:2.5mm;padding:4mm;background:#fff;break-inside:avoid}.card.tint{background:var(--wash)}.card.red{border-left:1.4mm solid var(--red)}.card.teal{border-left:1.4mm solid var(--teal)}
+.callout{border-left:1.4mm solid var(--amber);background:#fff8df;padding:3.5mm 4mm;margin:4mm 0;border-radius:0 2mm 2mm 0}.warn{border-left-color:var(--red);background:#fff0ed}.good{border-left-color:var(--green);background:#edf8f2}
+.label{font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--red);margin-bottom:1.5mm}.big{font-size:24pt;line-height:1;color:var(--navy);font-weight:700}.small{font-size:8.8pt;color:var(--muted)}
+code,pre{font-family:'Liberation Mono',monospace}code{background:#edf0f2;border-radius:1mm;padding:.25mm 1mm;font-size:9.2pt}pre{margin:2mm 0 3mm;background:#0f2233;color:#e8f0f2;border-radius:2mm;padding:3mm 3.5mm;font-size:8.8pt;line-height:1.42;white-space:pre-wrap;overflow-wrap:anywhere}
+table{width:100%;border-collapse:collapse;margin:2mm 0 4mm;font-size:9.2pt;break-inside:avoid}th{background:var(--navy);color:#fff;text-align:left;padding:2.3mm}td{border-bottom:.3mm solid var(--line);padding:2.2mm;vertical-align:top}tr:nth-child(even) td{background:#f7f8f9}
+.steps{counter-reset:s}.step{position:relative;padding:0 0 4mm 11mm;min-height:10mm}.launch .step{padding-bottom:2.4mm;min-height:8mm}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:7mm;height:7mm;border-radius:50%;background:var(--red);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.flow{display:flex;align-items:stretch;gap:2mm;margin:5mm 0}.node{flex:1;border:.4mm solid var(--line);border-radius:2mm;padding:3mm;text-align:center;background:#fff}.arrow{align-self:center;color:var(--red);font-weight:700;font-size:14pt}
+.check{list-style:none;padding-left:0}.check li{padding-left:6mm;position:relative}.check li:before{content:'□';position:absolute;left:0;color:var(--red);font-weight:700}
+.toc{display:grid;grid-template-columns:1fr 16mm;gap:0}.toc div{padding:2mm 0;border-bottom:.3mm solid var(--line)}.toc .n{text-align:right;color:var(--red);font-weight:700}
+a{color:var(--red2);text-decoration:none}.mono{font-family:'Liberation Mono',monospace}.tight p{margin-bottom:1.7mm}.source{font-size:8.5pt;line-height:1.3;overflow-wrap:anywhere}.spacer{height:3mm}.compact .step{padding-bottom:1.7mm}.compact p{margin-bottom:2.2mm}.compact h2{margin-bottom:3mm}.compare .statrow>div{padding:1.9mm 2.3mm}.compare .callout{margin:3mm 0;padding:3mm 4mm}.compare h3{margin-top:4.5mm!important}.statrow{display:grid;grid-template-columns:34mm 1fr 1fr;gap:0;border-bottom:.3mm solid var(--line)}.statrow>div{padding:2.3mm}.statrow .head{font-weight:700;color:var(--navy)}.status{display:inline-block;border:.35mm solid var(--amber);background:#fff8df;border-radius:2mm;padding:1mm 2.2mm;font-weight:700;font-size:8.8pt}.num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<section class="page">
+  <div class="header"><b>Oracle Cloud Infrastructure</b><span>Practical VPS cheatsheet</span></div>
+  <div class="kicker">Always Free compute, without the cloud fog</div>
+  <h1>From empty tenancy<br>to useful Linux server</h1>
+  <p class="dek">A field guide to Oracle Cloud Infrastructure (OCI): what the pieces mean, which free VM to choose, how to connect, how traffic reaches it, and how to avoid surprise costs or preventable lockouts.</p>
+  <div class="rule"></div>
+  <div class="grid3">
+    <div class="card red"><div class="label">Best free target</div><div class="big">A1</div><p>Ampere Arm flexible VM. Allocate from the monthly Always Free compute pool.</p></div>
+    <div class="card teal"><div class="label">Recommended OS</div><div class="big">Ubuntu</div><p>Familiar tooling and a broad package ecosystem. Verify every container image supports <span class="mono">arm64</span>.</p></div>
+    <div class="card"><div class="label">Access model</div><div class="big">SSH</div><p>Use a key pair, not a server password. The private key stays on your own device.</p></div>
+  </div>
+  <div class="callout warn"><strong>The free tier is a limit, not a magic shield.</strong> Confirm the resource is marked <strong>Always Free eligible</strong>, use only the home region for free compute, and create budget alerts before experimenting.</div>
+  <h2>What this guide gives you</h2>
+  <div class="toc">
+    <div>1. The OCI mental model</div><div class="n">2</div>
+    <div>2. Your full Always Free VM inventory</div><div class="n">3</div>
+    <div>3. Your VM compared with Sock's sandbox</div><div class="n">4</div>
+    <div>4. A safe first-VM recipe</div><div class="n">5</div>
+    <div>5. SSH and first-hour setup</div><div class="n">6</div>
+    <div>6. Networking and firewall logic</div><div class="n">7</div>
+    <div>7. Daily operations and troubleshooting</div><div class="n">8</div>
+    <div>8. Cost, backup, and security guardrails</div><div class="n">9</div>
+    <div>9. Glossary and official sources</div><div class="n">10</div>
+  </div>
+  <div class="footer"><span>Prepared 24 Sep 2026</span><span>1 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>01 / Mental model</b><span>Know what contains what</span></div>
+  <h2>OCI is a set of nested boundaries</h2>
+  <p>Think from the outside inward. Most console confusion comes from viewing the right service in the wrong region or compartment.</p>
+  <div class="flow">
+    <div class="node"><strong>Tenancy</strong><br><span class="small">Your cloud account</span></div><div class="arrow">›</div>
+    <div class="node"><strong>Region</strong><br><span class="small">Geographic area</span></div><div class="arrow">›</div>
+    <div class="node"><strong>Compartment</strong><br><span class="small">Resource folder + policy scope</span></div>
+  </div>
+  <div class="flow">
+    <div class="node"><strong>VCN</strong><br><span class="small">Private network</span></div><div class="arrow">›</div>
+    <div class="node"><strong>Subnet</strong><br><span class="small">Address range</span></div><div class="arrow">›</div>
+    <div class="node"><strong>VNIC</strong><br><span class="small">VM network card</span></div><div class="arrow">›</div>
+    <div class="node"><strong>Instance</strong><br><span class="small">Your VM</span></div>
+  </div>
+  <div class="grid2">
+    <div class="card red tight"><h3>Identity and organization</h3><p><strong>Tenancy:</strong> the top-level account and billing boundary.</p><p><strong>Identity domain:</strong> users, sign-in, groups, and authentication.</p><p><strong>Compartment:</strong> a logical container used for permissions, quotas, budgets, and finding resources.</p><p><strong>OCID:</strong> Oracle Cloud Identifier, a long unique ID attached to each resource.</p></div>
+    <div class="card teal tight"><h3>Compute and storage</h3><p><strong>Instance:</strong> a virtual machine.</p><p><strong>Shape:</strong> CPU architecture, OCPU count, and memory profile.</p><p><strong>Image:</strong> operating system template, such as Ubuntu or Oracle Linux.</p><p><strong>Boot volume:</strong> persistent disk holding the operating system and files.</p></div>
+    <div class="card tight"><h3>Location</h3><p><strong>Home region:</strong> the account's anchor region. Always Free compute must be created here.</p><p><strong>Availability domain (AD):</strong> an isolated data-center group within a region.</p><p><strong>Fault domain:</strong> a hardware grouping inside an AD.</p></div>
+    <div class="card tint tight"><h3>Networking</h3><p><strong>VCN:</strong> your software-defined private network.</p><p><strong>Subnet:</strong> a slice of the VCN address space.</p><p><strong>Internet gateway:</strong> a route target that lets a public subnet reach the internet.</p><p><strong>NSG:</strong> Network Security Group; firewall rules for selected VNICs.</p></div>
+  </div>
+  <div class="callout good"><strong>Fast orientation:</strong> check the region selector, then the compartment selector, before assuming a resource is missing.</div>
+  <div class="footer"><span>Oracle Cloud Infrastructure</span><span>2 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>02 / Always Free</b><span>How many VMs you actually get</span></div>
+  <h2>You can run up to four free VMs</h2>
+  <p>As of September 2026, an Always Free tenancy can hold <strong>up to four compute instances</strong>: as many as <strong>two Ampere A1 Flex VMs</strong> sharing one Arm resource pool, plus <strong>two AMD E2.1.Micro VMs</strong>.</p>
+  <div class="grid3">
+    <div class="card red"><div class="label">A1 Flex allowance</div><div class="big">2 VMs</div><p class="small">They share 2 OCPUs and 12 GB RAM across the tenancy.</p></div>
+    <div class="card teal"><div class="label">E2 Micro allowance</div><div class="big">2 VMs</div><p class="small">Each has 1 AMD OCPU, 2 vCPUs, and 1 GB RAM.</p></div>
+    <div class="card"><div class="label">Maximum count</div><div class="big">4 VMs</div><p class="small">Only if the shared 200 GB disk pool can hold all boot volumes.</p></div>
+  </div>
+  <h3 style="margin-top:5mm">The four slots are not identical</h3>
+  <table>
+    <thead><tr><th>Free allowance</th><th>CPU</th><th>RAM</th><th>Best use</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Up to 2 × A1 Flex</strong></td><td>Ampere Altra Arm; <strong>2 OCPUs total</strong> shared</td><td><strong>12 GB total</strong> shared</td><td>Main app server, Docker, agents, Node/Python workloads</td></tr>
+      <tr><td><strong>2 × E2.1.Micro</strong></td><td>AMD x86; <strong>1 OCPU = 2 vCPUs</strong> each via hyperthreading</td><td><strong>1 GB each</strong></td><td>Light bot, status page, proxy, tiny sidecar</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>How the A1 pool splits:</strong> one A1 can use the full <strong>2 OCPUs / 12 GB</strong>, as your planned VM does. If you want two A1 VMs, they must divide that same pool, for example <strong>1 OCPU / 6 GB each</strong>. The pool was reduced from 4 OCPUs / 24 GB in June 2026.</div>
+  <h3>Storage determines how many fit</h3>
+  <p>All boot and block volumes share <strong>200 GB total</strong>. OCI boot volumes have a 47 GB minimum. Four minimum-size boot volumes need about <strong>188 GB</strong>. Your 100 GB boot volume leaves 100 GB, enough for two more 47 GB boot volumes, so the practical maximum with the current disk choice is <strong>three VMs total</strong>, not four.</p>
+  <div class="grid2">
+    <div class="card good"><h3>Other free infrastructure</h3><ul><li>10 TB outbound bandwidth each month</li><li>Public IPv4 is free while attached to a running instance</li><li>200 GB combined boot/block storage</li></ul></div>
+    <div class="card warn"><h3>Two important caveats</h3><ul><li>Arm capacity can be scarce: retry after <code>Out of host capacity</code>, or try another available region.</li><li>Oracle may reclaim Always Free instances it classifies as idle.</li></ul></div>
+  </div>
+  <div class="footer"><span>Always Free inventory - September 2026</span><span>3 / 10</span></div>
+</section>
+<section class="page compare">
+  <div class="header"><b>03 / Machine comparison</b><span>Your VM versus Sock's sandbox</span></div>
+  <h2>Your Oracle VM is the bigger Linux box</h2>
+  <p><span class="status">nelson-vm-01: provisioning on 24 Sep 2026</span></p>
+  <p>This compares the Linux sandbox that runs Sock's tools with the Oracle VM you configured. It does <strong>not</strong> compare against the Meta GPU infrastructure that runs the Muse model itself.</p>
+  <div class="statrow"><div></div><div class="head">Sock's sandbox</div><div class="head">nelson-vm-01</div></div>
+  <div class="statrow"><div class="head">CPU</div><div>2 shared vCPUs</div><div>2 dedicated OCPUs</div></div>
+  <div class="statrow"><div class="head">Processor</div><div>AMD EPYC 9D25</div><div>Ampere Altra</div></div>
+  <div class="statrow"><div class="head">Architecture</div><div>x86_64</div><div>Arm64 / aarch64</div></div>
+  <div class="statrow"><div class="head">Memory</div><div>7.7 GB RAM</div><div>12 GB RAM</div></div>
+  <div class="statrow"><div class="head">Disk</div><div>7.5 GB</div><div>100 GB boot volume</div></div>
+  <div class="statrow"><div class="head">Operating system</div><div>Ubuntu 24.04</div><div>Canonical Ubuntu 24.04 Minimal</div></div>
+  <div class="statrow"><div class="head">CPU scheduling</div><div>Shared slices of a larger host</div><div>Full physical Arm cores; no hyperthreading</div></div>
+  <div class="statrow"><div class="head">Role</div><div>Temporary tool-running workspace</div><div>Your persistent API-and-agent server</div></div>
+  <h3 style="margin-top:6mm">Your exact deployment plan</h3>
+  <div class="grid2">
+    <div class="card red tight"><p><strong>Name:</strong> <code>nelson-vm-01</code></p><p><strong>Shape:</strong> <code>VM.Standard.A1.Flex</code></p><p><strong>Region:</strong> <code>ca-montreal-1</code></p><p><strong>Image:</strong> Canonical Ubuntu 24.04 Minimal aarch64</p></div>
+    <div class="card teal tight"><p><strong>Compute:</strong> 2 OCPUs / 12 GB RAM</p><p><strong>Storage:</strong> 100 GB boot volume</p><p><strong>Address:</strong> reserved public IPv4</p><p><strong>Ingress:</strong> TCP 22, 80, and 443</p></div>
+  </div>
+  <div class="callout good"><strong>Where your VM wins:</strong> 55% more RAM, over 13 times the disk, and dedicated physical CPU cores. It is built to stay online and host your own services.</div>
+  <div class="callout"><strong>Where the sandbox differs:</strong> x86_64 has broader compatibility with old or x86-only binaries. On the A1 VM, prefer packages and container images that publish <code>linux/arm64</code> builds.</div>
+  <div class="callout warn"><strong>The “brain” is separate from the hardware.</strong> The VM runs the installed agent, command-line interfaces, orchestration, storage, and networking. API keys let those tools call remote large language models; the model inference usually runs at the API provider, not on the two Arm cores.</div>
+  <div class="footer"><span>Machine profile</span><span>4 / 10</span></div>
+</section>
+<section class="page compact">
+  <div class="header"><b>04 / Create the VM</b><span>A safe starter configuration</span></div>
+  <h2>Build one simple, recoverable server</h2>
+  <div class="steps launch">
+    <div class="step"><h3>Name and placement</h3><p>Open <strong>Compute › Instances › Create instance</strong>. Use <code>nelson-vm-01</code>. Confirm the compartment and the Montreal home region (<code>ca-montreal-1</code>).</p></div>
+    <div class="step"><h3>Choose the image</h3><p>Select <strong>Canonical Ubuntu 24.04 Minimal aarch64</strong> for A1. If you choose Oracle Linux, remember the SSH user changes from <code>ubuntu</code> to <code>opc</code>.</p></div>
+    <div class="step"><h3>Choose the shape</h3><p>Select <code>VM.Standard.A1.Flex</code>, then set <strong>2 OCPUs / 12 GB RAM</strong>. Stop if the page does not show the shape as Always Free eligible.</p></div>
+    <div class="step"><h3>Create the network path</h3><p>Use a VCN with a <strong>public subnet</strong>, internet gateway, and route to <code>0.0.0.0/0</code>. Assign a public IPv4 address if you need direct SSH from home.</p></div>
+    <div class="step"><h3>Use an SSH public key</h3><p>Upload an existing <code>.pub</code> key or let OCI generate a key pair. Download the private key once and store it securely. Oracle does not retain a recoverable copy of a console-generated private key.</p></div>
+    <div class="step"><h3>Keep storage modest</h3><p>Use the selected <strong>100 GB</strong> boot volume. It leaves 100 GB in the Always Free storage pool; every additional instance needs at least 47 GB.</p></div>
+    <div class="step"><h3>Review before launch</h3><p>Confirm the Always Free label, architecture, OCPU/RAM, boot size, public IP choice, and estimated cost. Then create the instance and wait for <strong>Running</strong>.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="card good"><h3>Open only what you use</h3><ul><li>TCP 22: SSH, ideally from your own public IP</li><li>TCP 80: HTTP, if serving a public website</li><li>TCP 443: HTTPS, if serving a public website</li></ul></div>
+    <div class="card warn"><h3>Do not do this</h3><ul><li>Do not paste a private SSH key into cloud-init.</li><li>Do not enable password SSH for convenience.</li><li>Do not expose databases or admin panels to <code>0.0.0.0/0</code>.</li></ul></div>
+  </div>
+  <div class="callout"><strong>Arm compatibility check:</strong> before deploying a container, look for a multi-architecture image or explicit <code>linux/arm64</code> support. Run <code>uname -m</code>; A1 should report <code>aarch64</code>.</div>
+  <div class="footer"><span>Launch checklist</span><span>5 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>05 / First connection</b><span>SSH, patch, verify</span></div>
+  <h2>Your first ten minutes on the VM</h2>
+  <h3>1. Lock down the key locally</h3>
+  <pre>chmod 600 ~/keys/oracle-vm.key</pre>
+  <h3>2. Connect to the public IP</h3>
+  <pre># Ubuntu image
+ssh -i ~/keys/oracle-vm.key ubuntu@203.0.113.10
+
+# Oracle Linux image
+ssh -i ~/keys/oracle-vm.key opc@203.0.113.10</pre>
+  <p class="small">Replace the example address with the instance's real public IP. On first connection, verify the host-key fingerprint through a trusted channel before accepting it.</p>
+  <h3>3. Identify and update the system</h3>
+  <pre>uname -m                 # A1 normally reports aarch64
+cat /etc/os-release
+sudo apt update && sudo apt upgrade -y   # Ubuntu
+# Oracle Linux: sudo dnf upgrade -y</pre>
+  <h3>4. Check resources</h3>
+  <pre>nproc                    # logical processors visible to Linux
+free -h                  # memory
+lsblk                    # disks and mount points
+df -h /                  # root filesystem usage
+ip -brief address        # interfaces and addresses</pre>
+  <h3>5. Create a memorable local SSH alias</h3>
+  <pre># ~/.ssh/config on your own computer
+Host oracle-free
+  HostName 203.0.113.10
+  User ubuntu
+  IdentityFile ~/keys/oracle-vm.key
+  IdentitiesOnly yes
+
+# Then connect with:
+ssh oracle-free</pre>
+  <div class="callout warn"><strong>Never lose the private key.</strong> Keep an encrypted backup. Anyone who gets it can attempt to access the server; Oracle's documentation says it cannot recover a console-generated private key for you.</div>
+  <p><strong>File transfer:</strong> use <code>scp local-file oracle-free:~/</code> to upload, or <code>scp -r oracle-free:~/folder ./</code> to download.</p>
+  <div class="footer"><span>Shell access</span><span>6 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>06 / Networking</b><span>Four gates must agree</span></div>
+  <h2>A public IP alone does not open a port</h2>
+  <div class="flow">
+    <div class="node"><strong>1. Address</strong><br><span class="small">Public IPv4 on VNIC</span></div><div class="arrow">›</div>
+    <div class="node"><strong>2. Route</strong><br><span class="small">0.0.0.0/0 to internet gateway</span></div><div class="arrow">›</div>
+    <div class="node"><strong>3. OCI rule</strong><br><span class="small">NSG or security list</span></div><div class="arrow">›</div>
+    <div class="node"><strong>4. OS rule</strong><br><span class="small">UFW / firewalld + service</span></div>
+  </div>
+  <p>Inbound traffic works only when every relevant layer permits it and the application is actually listening.</p>
+  <table>
+    <thead><tr><th>Layer</th><th>Question</th><th>Where to check</th></tr></thead>
+    <tbody>
+      <tr><td>Public address</td><td>Does the primary VNIC have a public IP?</td><td>Instance › Networking › Attached VNICs</td></tr>
+      <tr><td>Route table</td><td>Does the subnet route internet traffic to an internet gateway?</td><td>VCN › Subnets › Route table</td></tr>
+      <tr><td>Cloud firewall</td><td>Does an ingress rule allow the protocol, port, and source?</td><td>NSG or subnet security list</td></tr>
+      <tr><td>Host firewall</td><td>Does Linux permit the port?</td><td><code>sudo ufw status</code> or firewalld</td></tr>
+      <tr><td>Application</td><td>Is something listening on the correct interface?</td><td><code>sudo ss -lntup</code></td></tr>
+    </tbody>
+  </table>
+  <div class="grid2">
+    <div class="card teal"><h3>Security list</h3><p>Rules apply to all VNICs in the associated subnet. Simple, but broad.</p></div>
+    <div class="card red"><h3>Network Security Group</h3><p>Rules apply only to selected VNICs. Oracle recommends NSGs for separating application security from subnet design.</p></div>
+  </div>
+  <h3 style="margin-top:5mm">Source CIDR: choose the narrowest safe value</h3>
+  <table>
+    <thead><tr><th>Source</th><th>Meaning</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><code>your.public.ip/32</code></td><td>One IPv4 address</td><td>Best for SSH when your address is stable</td></tr>
+      <tr><td><code>0.0.0.0/0</code></td><td>Every IPv4 address</td><td>Normal for public HTTP/HTTPS; risky for admin ports</td></tr>
+      <tr><td>VCN CIDR</td><td>Private network only</td><td>Internal services between OCI resources</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn"><strong>Two-firewall trap:</strong> adding an OCI ingress rule does not update Ubuntu's UFW or Oracle Linux's firewalld. Check both. Also bind public services to <code>0.0.0.0</code> or the VM's private address, not only <code>127.0.0.1</code>.</div>
+  <div class="footer"><span>Network path</span><span>7 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>07 / Operations</b><span>The commands worth remembering</span></div>
+  <h2>Run it like a small Linux server</h2>
+  <div class="grid2">
+    <div class="card red"><h3>System health</h3><pre>uptime
+free -h
+df -h
+du -sh ./* | sort -h
+top
+sudo ss -lntup</pre></div>
+    <div class="card teal"><h3>Services and logs</h3><pre>systemctl --failed
+sudo systemctl status nginx
+sudo systemctl restart nginx
+sudo journalctl -u nginx -n 100
+sudo journalctl -u nginx -f</pre></div>
+    <div class="card"><h3>Updates and reboot</h3><pre>sudo apt update
+sudo apt upgrade -y
+sudo reboot
+
+# Oracle Linux
+sudo dnf upgrade -y</pre></div>
+    <div class="card tint"><h3>Docker basics</h3><pre>docker ps
+docker compose ps
+docker compose logs -f
+docker compose pull
+docker compose up -d
+docker system df</pre></div>
+  </div>
+  <h3 style="margin-top:5mm">When SSH does not connect, check in this order</h3>
+  <ol>
+    <li><strong>Lifecycle:</strong> the instance is <strong>Running</strong>, not Stopped, Terminated, or Provisioning.</li>
+    <li><strong>Address:</strong> use the current public IP shown on the instance details page.</li>
+    <li><strong>Network:</strong> public subnet, internet-gateway route, and TCP 22 ingress are present.</li>
+    <li><strong>Source:</strong> if port 22 is limited to a <code>/32</code>, your current home public IP still matches it.</li>
+    <li><strong>Username:</strong> <code>ubuntu</code> for Ubuntu; <code>opc</code> for Oracle Linux and Red Hat-compatible images.</li>
+    <li><strong>Key:</strong> the private key matches the public key installed at creation, and local permissions are restrictive.</li>
+    <li><strong>Syntax:</strong> use <code>ssh -i /path/key user@public-ip</code>.</li>
+  </ol>
+  <div class="callout"><strong>Useful SSH diagnostics:</strong><pre style="margin-bottom:0">ssh -vvv -i ~/keys/oracle-vm.key ubuntu@203.0.113.10
+# timeout: usually route/firewall/address
+# permission denied (publickey): usually user/key mismatch</pre></div>
+  <h3>When an app works locally but not remotely</h3>
+  <pre>curl -I http://127.0.0.1:PORT
+sudo ss -lntup | grep PORT
+sudo ufw status verbose
+# Then check the OCI NSG/security-list ingress rule for the same port.</pre>
+  <div class="footer"><span>Daily command card</span><span>8 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>08 / Guardrails</b><span>Free, secure, recoverable</span></div>
+  <h2>Treat free infrastructure as replaceable</h2>
+  <div class="grid2">
+    <div class="card red"><h3>Cost controls</h3><ul class="check"><li>Create a small monthly budget with email alerts.</li><li>Check Cost Analysis after creating resources.</li><li>Verify every shape and service is Always Free eligible.</li><li>Delete unused paid resources, not only their parent VM.</li><li>Remember: a budget is an alerting tool, not a hard spending cap.</li></ul></div>
+    <div class="card teal"><h3>Access controls</h3><ul class="check"><li>Keep multifactor authentication enabled for the cloud account.</li><li>Use SSH keys; keep password login and root login disabled.</li><li>Restrict SSH ingress to your IP or a private overlay network.</li><li>Patch the OS and applications regularly.</li><li>Never store private keys, API keys, or tokens in a public repo.</li></ul></div>
+  </div>
+  <h3 style="margin-top:5mm">Budget setup</h3>
+  <div class="steps">
+    <div class="step"><p>Open <strong>Billing &amp; Cost Management › Budgets</strong> and create a budget scoped to the root or project compartment.</p></div>
+    <div class="step"><p>Add actual-spend alert rules at low thresholds appropriate for a free-tier account.</p></div>
+    <div class="step"><p>Send alerts to an address you actively monitor, then verify the alert rule exists.</p></div>
+  </div>
+  <div class="callout warn"><strong>Idle reclamation changes the design.</strong> Oracle may reclaim an Always Free compute instance it classifies as idle. Do not manufacture fake load. Instead, keep important code in source control, back up stateful data, and make the server reproducible so a replacement is routine.</div>
+  <h3>Minimum backup pattern</h3>
+  <table>
+    <thead><tr><th>What</th><th>Where</th><th>Cadence</th></tr></thead>
+    <tbody>
+      <tr><td>Application code</td><td>Private Git repository</td><td>Every meaningful change</td></tr>
+      <tr><td>Configuration</td><td>Encrypted backup; secrets separate</td><td>After configuration changes</td></tr>
+      <tr><td>Database/data</td><td>Encrypted off-instance destination</td><td>Based on acceptable data loss</td></tr>
+      <tr><td>Boot volume</td><td>OCI boot-volume backup</td><td>Before risky upgrades or migrations</td></tr>
+    </tbody>
+  </table>
+  <div class="callout good"><strong>Recovery test:</strong> a backup is not proven until you can restore it. Keep a short rebuild note: image, shape, ports, DNS, packages, services, mount points, and restore command.</div>
+  <div class="footer"><span>Cost, security, recovery</span><span>9 / 10</span></div>
+</section>
+<section class="page">
+  <div class="header"><b>09 / Reference</b><span>Glossary + official sources</span></div>
+  <h2>The one-page memory card</h2>
+  <div class="grid2 tight">
+    <div class="card red"><h3>Provisioning words</h3><p><strong>Tenancy:</strong> your whole OCI account.</p><p><strong>Region:</strong> geographic deployment area.</p><p><strong>Compartment:</strong> logical resource and policy container.</p><p><strong>Shape:</strong> VM CPU architecture and resource profile.</p><p><strong>Image:</strong> operating system template.</p><p><strong>OCID:</strong> globally unique Oracle resource ID.</p></div>
+    <div class="card teal"><h3>Networking words</h3><p><strong>VCN:</strong> virtual cloud network.</p><p><strong>Subnet:</strong> address range inside a VCN.</p><p><strong>VNIC:</strong> virtual network interface card.</p><p><strong>NSG:</strong> firewall rules for selected VNICs.</p><p><strong>Security list:</strong> firewall rules for a subnet.</p><p><strong>CIDR:</strong> compact notation for an IP range.</p></div>
+  </div>
+  <div class="callout good"><strong>Recommended starter:</strong> one Ubuntu LTS Arm VM on <code>VM.Standard.A1.Flex</code>, 2 OCPUs, 12 GB RAM, 100 GB boot volume, reserved public IP, key-based SSH, TCP 22, and public TCP 80/443 for web traffic.</div>
+  <h3>Official Oracle references</h3>
+  <ol class="source">
+    <li><strong>Always Free Resources:</strong> limits, home-region rule, capacity guidance, storage, and idle reclamation.<br><a href="https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm">https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm</a></li>
+    <li><strong>Access and Manage a Linux Compute Instance:</strong> SSH connection walkthrough.<br><a href="https://docs.oracle.com/en/learn/access-oci-linux-instance/index.html">https://docs.oracle.com/en/learn/access-oci-linux-instance/index.html</a></li>
+    <li><strong>Troubleshooting the SSH Connection:</strong> public subnet, port 22, usernames, and key checks.<br><a href="https://docs.Oracle.com/en-us/iaas/Content/Compute/Tasks/troubleshooting-ssh-connection.htm">https://docs.Oracle.com/en-us/iaas/Content/Compute/Tasks/troubleshooting-ssh-connection.htm</a></li>
+    <li><strong>Managing Key Pairs on Linux Instances:</strong> key behavior and private-key handling.<br><a href="https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/managingkeypairs.htm">https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/managingkeypairs.htm</a></li>
+    <li><strong>Security Rules:</strong> security lists versus Network Security Groups.<br><a href="https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securityrules.htm">https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securityrules.htm</a></li>
+    <li><strong>Creating a Budget:</strong> budget scope and alert configuration.<br><a href="https://docs.oracle.com/en-us/iaas/Content/Billing/Tasks/create-budget.htm">https://docs.oracle.com/en-us/iaas/Content/Billing/Tasks/create-budget.htm</a></li>
+    <li><strong>Compute Instance Security:</strong> SSH, patching, host firewall, and hardening guidance.<br><a href="https://docs.oracle.com/en/solutions/oci-security-checklist/compute-security1.html">https://docs.oracle.com/en/solutions/oci-security-checklist/compute-security1.html</a></li>
+    <li><strong>Boot-volume backups:</strong> point-in-time backup behavior and CLI reference.<br><a href="https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/bv/boot-volume-backup.html">https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/bv/boot-volume-backup.html</a></li>
+  </ol>
+  <p class="small">Accessed 24 Sep 2026. Oracle can change service limits, labels, and console navigation; verify the Always Free page and the creation-screen estimate before provisioning.</p>
+  <div class="footer"><span>Keep this page with your rebuild notes</span><span>10 / 10</span></div>
+</section>
+</body>
+</html>

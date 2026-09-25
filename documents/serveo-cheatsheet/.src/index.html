@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serveo Cheatsheet - Temporary access to a local dashboard</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+:root { --ink:#182430; --muted:#586979; --paper:#f7f4ec; --navy:#12364a; --blue:#0b759b; --cyan:#cceef2; --lime:#dfeab4; --amber:#f2d49c; --red:#a9443e; --line:#c7d2d4; --white:#fffdfa; }
+body { margin:0; font-family:'Liberation Sans','Noto Sans',sans-serif; color:var(--ink); background:#d9e1e2; }
+.page { width:210mm; min-height:297mm; padding:15mm 17mm 14mm; background:var(--paper); position:relative; page-break-after:always; overflow:hidden; }
+.page:last-child { page-break-after:auto; }
+.header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--navy); padding-bottom:4mm; margin-bottom:7mm; }
+.kicker { font-size:8.5pt; letter-spacing:1.2px; text-transform:uppercase; color:var(--blue); font-weight:700; }
+h1 { margin:1.5mm 0 0; font-size:29pt; line-height:1.02; color:var(--navy); letter-spacing:-.5px; }
+.deck { max-width:102mm; font-size:11.5pt; line-height:1.42; color:var(--muted); margin:3mm 0 0; }
+.meta { text-align:right; color:var(--muted); font-size:8.5pt; line-height:1.5; }
+h2 { font-size:16pt; line-height:1.18; margin:0 0 3.5mm; color:var(--navy); }
+h3 { font-size:10.5pt; margin:0 0 1.5mm; color:var(--navy); }
+p { font-size:10pt; line-height:1.42; margin:0 0 3mm; }
+strong { color:var(--navy); }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.summary { display:grid; grid-template-columns:1.25fr .75fr; gap:5mm; margin-bottom:7mm; }
+.card { background:var(--white); border:1px solid var(--line); border-radius:3mm; padding:4.5mm; }
+.card.accent { background:var(--cyan); border-color:#9bcfd6; }
+.card.warn { background:#fff6e5; border-color:#dfbd76; }
+.card.safe { background:#eef4db; border-color:#b8ca78; }
+.big { font-size:14pt; line-height:1.34; font-weight:700; color:var(--navy); }
+.label { font-size:8pt; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.8px; margin-bottom:1.5mm; }
+ul { margin:0; padding-left:5mm; }
+li { font-size:9.5pt; line-height:1.38; margin:0 0 2mm; }
+.flow { display:grid; grid-template-columns:1fr 12mm 1fr 12mm 1fr; align-items:center; margin:4mm 0 2mm; }
+.node { min-height:29mm; background:var(--white); border:1.5px solid var(--navy); border-radius:3mm; padding:3.5mm; text-align:center; display:flex; flex-direction:column; justify-content:center; }
+.node b { font-size:11pt; color:var(--navy); }
+.node span { font-size:8.5pt; line-height:1.32; color:var(--muted); margin-top:1.5mm; }
+.arrow { text-align:center; color:var(--blue); font-size:19pt; font-weight:700; }
+.caption { font-size:8.5pt; color:var(--muted); text-align:center; margin-bottom:7mm; }
+code, pre { font-family:'Liberation Mono','Noto Sans Mono',monospace; }
+pre { margin:2mm 0 0; background:#112b3a; color:#eef7f6; border-radius:2.5mm; padding:4mm; font-size:9pt; line-height:1.5; white-space:pre-wrap; }
+.term { color:#93dbe2; }
+.rule { border-top:1px solid var(--line); margin:5mm 0; }
+.check { display:grid; grid-template-columns:6mm 1fr; gap:2mm; align-items:start; margin-bottom:2.6mm; }
+.box { width:4.3mm; height:4.3mm; border:1.2px solid var(--navy); margin-top:.3mm; background:var(--white); }
+.check div:last-child { font-size:9.5pt; line-height:1.38; }
+.note { border-left:3px solid var(--blue); padding:1mm 0 1mm 4mm; color:var(--muted); font-size:9.5pt; line-height:1.42; }
+.table { width:100%; border-collapse:collapse; margin-top:2mm; }
+.table th { background:var(--navy); color:white; font-size:8.5pt; text-align:left; padding:2.5mm; }
+.table td { border-bottom:1px solid var(--line); padding:2.7mm; font-size:9pt; line-height:1.3; vertical-align:top; }
+.footer { position:absolute; left:17mm; right:17mm; bottom:7mm; display:flex; justify-content:space-between; border-top:1px solid var(--line); padding-top:2.5mm; font-size:8pt; color:var(--muted); }
+a { color:var(--blue); text-decoration:none; }
+.small { font-size:8.5pt; line-height:1.35; color:var(--muted); }
+.page.compact .header { margin-bottom:5mm; padding-bottom:3mm; }
+.page.compact .rule { margin:3mm 0; }
+.page.compact .card { padding:3.5mm; }
+.page.compact p { margin-bottom:2mm; }
+.page.compact li { margin-bottom:1.4mm; }
+.page.compact .table td { padding:2mm 2.5mm; }
+.page.compact .summary { margin-bottom:4mm; }
+@media print { body { background:none; } }
+</style>
+</head>
+<body>
+<section class="page">
+  <header class="header">
+    <div>
+      <div class="kicker">Network field guide</div>
+      <h1>Serveo, without the mystery</h1>
+      <p class="deck">A plain-English guide to the temporary public tunnel used to open the Snake dashboard from your phone.</p>
+    </div>
+    <div class="meta">Version 1.0<br>24 September 2026<br>3-page cheatsheet</div>
+  </header>
+
+  <div class="summary">
+    <div class="card accent">
+      <div class="label">The 20-second answer</div>
+      <p class="big">Serveo is a relay. It gives a local web app a temporary public address, then forwards visits through an outbound Secure Shell (SSH) connection.</p>
+      <p>The VM initiates the connection. Serveo does not need a new inbound firewall port, a VPN membership, or general shell access to the VM.</p>
+    </div>
+    <div class="card safe">
+      <div class="label">What approval means</div>
+      <p><strong>Allow one temporary tunnel</strong> from the VM to <code>serveo.net</code>, forwarding only the dashboard's chosen local port.</p>
+      <p class="small">It does not authorize exposing other ports, files, terminals, or services.</p>
+    </div>
+  </div>
+
+  <h2>Traffic follows one narrow path</h2>
+  <figure style="margin:0">
+    <div class="flow">
+      <div class="node"><b>Your phone</b><span>Opens the temporary public HTTPS address</span></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><b>Serveo relay</b><span>Accepts the public request and routes it into the tunnel</span></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><b>Dashboard on VM</b><span>Receives the request on one selected localhost port</span></div>
+    </div>
+    <figcaption class="caption">Figure 1. HTTPS protects the public leg; SSH protects the reverse-tunnel leg.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="label">Serveo carries</div>
+      <ul>
+        <li>Dashboard page requests and responses.</li>
+        <li>Button clicks and values submitted through the dashboard.</li>
+        <li>WebSocket traffic if the dashboard uses it.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="label">Serveo does not automatically get</div>
+      <ul>
+        <li>A shell on the VM or broad filesystem access.</li>
+        <li>Access to ports that were not forwarded.</li>
+        <li>Model traffic that the dashboard server sends directly to a configured model endpoint.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+  <div class="card warn">
+    <div class="label">Important distinction</div>
+    <h3>Encrypted is not the same as private</h3>
+    <p>The route is encrypted in transit, but the generated address is publicly reachable. If the dashboard has no sign-in, possession of the URL is effectively the access control. Treat Serveo as part of the request path: do not type long-lived API keys, passwords, private files, or other secrets into an unauthenticated tunneled dashboard.</p>
+  </div>
+
+  <footer class="footer"><span>Serveo Cheatsheet</span><span>1 / 3</span></footer>
+</section>
+<section class="page">
+  <header class="header">
+    <div>
+      <div class="kicker">Approval and operations</div>
+      <h1 style="font-size:25pt">Use it like a temporary guest door</h1>
+      <p class="deck">Open only what you need, share the address narrowly, and close it when the demo is over.</p>
+    </div>
+    <div class="meta">Quick reference<br>Snake dashboard</div>
+  </header>
+
+  <div class="grid2">
+    <div>
+      <h2>Approval checklist</h2>
+      <div class="check"><span class="box"></span><div><strong>Scope:</strong> one local dashboard port only.</div></div>
+      <div class="check"><span class="box"></span><div><strong>Duration:</strong> temporary; the tunnel ends with the SSH process.</div></div>
+      <div class="check"><span class="box"></span><div><strong>Audience:</strong> only people who receive the generated address.</div></div>
+      <div class="check"><span class="box"></span><div><strong>Data:</strong> no passwords, API keys, tokens, private files, or sensitive records entered through the dashboard.</div></div>
+      <div class="check"><span class="box"></span><div><strong>Control:</strong> keep the local app bound to localhost and forward no unrelated service.</div></div>
+      <div class="check"><span class="box"></span><div><strong>Closeout:</strong> stop the SSH process when testing is complete.</div></div>
+    </div>
+    <div class="card safe">
+      <div class="label">Narrow approval statement</div>
+      <p><strong>I approve a temporary outbound SSH connection to Serveo for the Snake dashboard, limited to its selected localhost port and active only for this testing session.</strong></p>
+      <p class="small">This wording does not approve persistent startup, additional ports, credentials in the dashboard, or unrelated services.</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+  <h2>Know the controls</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Start</h3>
+      <pre>ssh -R 80:localhost:&lt;LOCAL_PORT&gt; serveo.net</pre>
+      <p class="small">Serveo prints the assigned public address after the connection starts. Substitute the dashboard's actual port.</p>
+    </div>
+    <div class="card">
+      <h3>Stop immediately</h3>
+      <pre>Ctrl+C</pre>
+      <p class="small">If the tunnel runs as a background process, terminate that SSH process. The public route should stop when the SSH session ends.</p>
+    </div>
+    <div class="card">
+      <h3>Check the local app first</h3>
+      <pre>curl http://localhost:&lt;LOCAL_PORT&gt;</pre>
+      <p class="small">A local response proves the app is listening. It does not prove the public tunnel is active.</p>
+    </div>
+    <div class="card">
+      <h3>Expect a warning page</h3>
+      <p>Serveo says anonymous and free-account HTTP tunnels show an interstitial browser warning. Continue only when the hostname ends in <code>.serveo.net</code> and matches the address printed by the tunnel session.</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+  <div class="note"><strong>Command anatomy:</strong> <code>ssh</code> opens the encrypted client connection; <code>-R</code> requests reverse forwarding; <code>80:localhost:&lt;LOCAL_PORT&gt;</code> points Serveo's HTTP entry to one local port; <code>serveo.net</code> is the relay host.</div>
+
+  <footer class="footer"><span>Serveo Cheatsheet</span><span>2 / 3</span></footer>
+</section>
+
+<section class="page compact">
+  <header class="header">
+    <div>
+      <div class="kicker">Risk and closeout</div>
+      <h1 style="font-size:25pt">Public for a moment still means public</h1>
+      <p class="deck">The safest tunnel is narrow, short-lived, and carries no secret the dashboard does not need.</p>
+    </div>
+    <div class="meta">Security reference<br>Snake dashboard</div>
+  </header>
+
+  <div class="grid2">
+    <div class="card warn">
+      <div class="label">Main risks</div>
+      <ul>
+        <li><strong>Public reachability:</strong> an unprotected dashboard can be opened by anyone who obtains the URL.</li>
+        <li><strong>Third-party relay:</strong> Serveo operates the internet-facing endpoint and sits in the traffic path. Do not assume the relay is a private vault.</li>
+        <li><strong>Abuse and scanning:</strong> public tunnel addresses can attract automated traffic.</li>
+        <li><strong>Availability:</strong> a free relay may disconnect or change the assigned address; it is for testing, not production.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Safer operating pattern</h2>
+      <ol style="margin:0;padding-left:5mm">
+        <li>Run the dashboard on <code>localhost</code>, not every network interface.</li>
+        <li>Open the tunnel only when you are ready to test.</li>
+        <li>Share the exact generated link privately.</li>
+        <li>Keep secrets out of the dashboard; use server-side credential storage.</li>
+        <li>Stop the tunnel after the test and confirm the public link no longer responds.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+  <div class="summary">
+    <div class="card safe">
+      <div class="label">Closeout test</div>
+      <p><strong>After stopping SSH, reload the public link.</strong> A failed connection confirms the relay no longer reaches the dashboard. Also verify no replacement or auto-reconnect process is running.</p>
+    </div>
+    <div class="card accent">
+      <div class="label">Private alternative</div>
+      <p>Host the dashboard on a device already reachable through your private Tailscale network. That avoids a public relay entirely.</p>
+    </div>
+  </div>
+
+  <h2>What the official documentation confirms</h2>
+  <table class="table" aria-label="Serveo documented behavior">
+    <tr><th>Documented behavior</th><th>Practical meaning</th></tr>
+    <tr><td>SSH reverse forwarding assigns a public subdomain.</td><td>The local app becomes reachable from the internet through a Serveo address.</td></tr>
+    <tr><td>Anonymous use is supported.</td><td>A basic tunnel may not require an account or registered key.</td></tr>
+    <tr><td>Free and anonymous HTTP tunnels display an interstitial warning.</td><td>Your browser may show Serveo's warning page before the dashboard.</td></tr>
+    <tr><td>Port 443 is available when outbound port 22 is blocked.</td><td>The SSH tunnel can use a network path that often works in restrictive environments.</td></tr>
+  </table>
+
+  <div class="rule"></div>
+  <h2>Sources and limits</h2>
+  <p>Serveo describes itself as a remote-port-forwarding service that provides a public URL through SSH and supports access from mobile devices. Features and limits may change, so recheck the official documentation before relying on it for persistent or production access.</p>
+  <p class="small"><strong>Official references:</strong> <a href="http://serveo.net/">serveo.net</a> &nbsp;|&nbsp; <a href="http://serveo.net/docs">serveo.net/docs</a> &nbsp;|&nbsp; accessed 24 September 2026.</p>
+
+  <footer class="footer"><span>Serveo Cheatsheet</span><span>3 / 3</span></footer>
+</section>
+</body>
+</html>

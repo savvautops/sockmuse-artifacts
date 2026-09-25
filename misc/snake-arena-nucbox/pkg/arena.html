@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snake Arena</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0b0f14;
+         color: #e6edf3; margin: 0; padding: 16px; }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  h2 { font-size: 1rem; margin: 20px 0 8px; }
+  .sub { color: #8b949e; font-size: .85rem; margin-bottom: 10px; }
+  .tabs { display: flex; gap: 8px; margin: 12px 0 4px; }
+  .tabs button { font-size: 1rem; padding: 8px 18px; }
+  button { background: #1c2630; color: #e6edf3; border: 1px solid #30363d;
+           border-radius: 8px; padding: 8px 14px; font-size: .9rem; cursor: pointer; }
+  button.active { background: #1f6feb; border-color: #1f6feb; }
+  button.primary { background: #1f6feb; border-color: #1f6feb; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.danger { border-color: #7a2e2e; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  label { font-size: .85rem; color: #8b949e; }
+  input[type=text], input[type=number], select, textarea {
+    background: #0d1117; color: #e6edf3; border: 1px solid #30363d;
+    border-radius: 8px; padding: 7px 10px; font-size: .88rem; width: 100%;
+    box-sizing: border-box; font-family: inherit; }
+  textarea { min-height: 76px; resize: vertical; line-height: 1.45; }
+  input[type=number] { width: 90px; }
+  input[type=checkbox] { width: 18px; height: 18px; accent-color: #1f6feb; }
+  input[type=color] { width: 40px; height: 30px; padding: 2px; border: 1px solid #30363d;
+    border-radius: 6px; background: #0d1117; }
+  .pcards { display: flex; flex-wrap: wrap; gap: 12px; }
+  .pcard { flex: 1 1 300px; background: #11161d; border: 1px solid #21262d;
+           border-radius: 12px; padding: 12px; }
+  .pcard.off { opacity: .45; }
+  .pcard .frow { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pcard .frow label { min-width: 82px; flex-shrink: 0; }
+  .pcard h3 { margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+  .pcard h3 .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .arena { display: flex; flex-wrap: wrap; gap: 16px; }
+  .panel { flex: 1 1 280px; background: #11161d; border: 1px solid #21262d;
+           border-radius: 12px; padding: 12px; }
+  .panel h2 { font-size: 1rem; margin: 0 0 2px; }
+  .panel h2 .tag { font-size: .72rem; color: #8b949e; font-weight: normal; }
+  .statline { font-size: .82rem; color: #8b949e; margin: 6px 0 8px;
+              display: flex; gap: 12px; flex-wrap: wrap; }
+  .statline b { color: #e6edf3; }
+  canvas { width: 100%; max-width: 320px; aspect-ratio: 1; display: block;
+           background: #0b0f14; border-radius: 8px; margin: 0 auto; }
+  .dead { position: relative; max-width: 320px; margin: 0 auto; }
+  .dead .overlay { position: absolute; inset: 0; display: flex; align-items: center;
+                   justify-content: center; background: rgba(0,0,0,.55); text-align: center;
+                   border-radius: 8px; font-weight: 700; font-size: 1rem; padding: 8px; }
+  .gcard { background: #0d1117; border: 1px solid #21262d; border-radius: 14px;
+           padding: 14px; margin-bottom: 16px; }
+  .ghead { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .ghead .spacer { flex: 1; }
+  .badge { font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+           letter-spacing: .04em; }
+  .badge.running { background: #143d1f; color: #4ade80; }
+  .badge.paused { background: #3d3114; color: #f5c518; }
+  .badge.finished { background: #1c2630; color: #8b949e; }
+  .badge.stopping { background: #3d1a14; color: #f08c7a; }
+  .perr { color: #ef4444; font-size: .8rem; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: .82rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #21262d; }
+  th { color: #8b949e; font-weight: 600; }
+  .verdict { background: #11161d; border: 1px solid #21262d; border-radius: 12px;
+             padding: 12px 14px; margin-top: 16px; font-size: .9rem; line-height: 1.6; }
+  .verdict b { color: #4ade80; }
+  .note { color: #8b949e; font-size: .78rem; margin-top: 10px; line-height: 1.5; }
+  .msg { font-size: .85rem; margin-left: 8px; }
+  .msg.ok { color: #4ade80; } .msg.err { color: #ef4444; }
+  #recSel { max-width: 480px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<h1>Snake Arena</h1>
+<div class="sub">Live model-vs-model snake &middot; one model call per move per player</div>
+<div class="tabs">
+  <button id="tabbtn-live" class="active" onclick="showTab('live')">Live</button>
+  <button id="tabbtn-rec" onclick="showTab('rec')">Recordings</button>
+</div>
+
+<section id="tab-live">
+  <h2>New game</h2>
+  <div class="pcards" id="pcards"></div>
+  <div class="controls" style="margin-top:12px">
+    <label>Board <input type="number" id="grid" min="6" max="24" value="12"></label>
+    <label>Max moves <input type="number" id="maxmoves" min="1" max="2000" value="400"></label>
+    <button class="primary" id="startBtn" onclick="startGame()">Start live game</button>
+    <button onclick="saveConfig(true)">Save config</button>
+    <span class="msg" id="cfgmsg"></span>
+  </div>
+  <div class="note">Every move is one real model call to that player's endpoint.
+  Pause halts all calls immediately. Endpoints, models and instructions save to the server when you start.
+  Use <code>{grid}</code> in instructions as a placeholder for the board size.</div>
+
+  <h2>Games</h2>
+  <div id="games"><div class="sub">No games yet. Configure players above and hit Start.</div></div>
+</section>
+
+<section id="tab-rec" hidden>
+  <h2>Recordings</h2>
+  <select id="recSel" onchange="loadRecording(this.value)"></select>
+  <div id="replay"></div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+async function api(path, method, body) {
+  const r = await fetch(path, {
+    method: method || "GET",
+    headers: {"Content-Type": "application/json"},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+function showTab(t) {
+  $("tab-live").hidden = t !== "live";
+  $("tab-rec").hidden = t !== "rec";
+  $("tabbtn-live").classList.toggle("active", t === "live");
+  $("tabbtn-rec").classList.toggle("active", t === "rec");
+  if (t === "rec") loadRecordingList();
+}
+
+/* ---------- config ---------- */
+let CONFIG = null;
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+async function loadConfig() {
+  CONFIG = await api("/api/config");
+  $("grid").value = CONFIG.grid;
+  $("maxmoves").value = CONFIG.max_moves;
+  const wrap = $("pcards");
+  wrap.innerHTML = "";
+  CONFIG.players.forEach((p, i) => {
+    const d = document.createElement("div");
+    d.className = "pcard" + (p.enabled ? "" : " off");
+    d.innerHTML =
+      '<h3><input type="checkbox" data-f="enabled" ' + (p.enabled ? "checked" : "") +
+        ' onchange="toggleCard(this)"><span class="dot" style="background:' + esc(p.color) + '"></span>' +
+        '<input type="text" data-f="label" value="' + esc(p.label) + '" style="max-width:130px">' +
+        '<input type="color" data-f="color" value="' + esc(p.color) + '"></h3>' +
+      '<div class="frow"><label>Endpoint</label><input type="text" data-f="url" value="' + esc(p.url) + '"></div>' +
+      '<div class="frow"><label>Protocol</label><select data-f="protocol">' +
+        '<option value="systemone"' + (p.protocol === "systemone" ? " selected" : "") + '>systemone (Jev-style)</option>' +
+        '<option value="openai"' + (p.protocol === "openai" ? " selected" : "") + '>openai chat</option>' +
+      '</select></div>' +
+      '<div class="frow"><label>Model</label><input type="text" data-f="model" value="' + esc(p.model) + '"></div>' +
+      '<div class="frow"><label>Tag</label><input type="text" data-f="tag" value="' + esc(p.tag) + '">' +
+        '<label style="min-width:0"><input type="checkbox" data-f="via_tunnel" ' + (p.via_tunnel ? "checked" : "") + '> via tunnel</label></div>' +
+      '<div class="frow"><label>Instructions</label></div>' +
+      '<textarea data-f="instructions">' + esc(p.instructions) + '</textarea>';
+    d.dataset.idx = i;
+    wrap.appendChild(d);
+  });
+}
+function toggleCard(cb) {
+  cb.closest(".pcard").classList.toggle("off", !cb.checked);
+}
+function collectConfig() {
+  const players = [...document.querySelectorAll(".pcard")].map(d => {
+    const g = f => d.querySelector('[data-f="' + f + '"]');
+    const val = f => g(f).type === "checkbox" ? g(f).checked : g(f).value;
+    const p = Object.assign({}, CONFIG.players[+d.dataset.idx]);
+    ["enabled", "label", "color", "url", "protocol", "model", "tag", "via_tunnel", "instructions"]
+      .forEach(f => p[f] = val(f));
+    return p;
+  });
+  return {grid: +$("grid").value, max_moves: +$("maxmoves").value, players};
+}
+function flashMsg(ok, text) {
+  const m = $("cfgmsg");
+  m.className = "msg " + (ok ? "ok" : "err");
+  m.textContent = text;
+  setTimeout(() => { m.textContent = ""; }, 4000);
+}
+async function saveConfig(quiet) {
+  try {
+    const cfg = collectConfig();
+    await api("/api/config", "POST", cfg);
+    CONFIG = cfg;
+    if (!quiet) flashMsg(true, "Saved.");
+    return true;
+  } catch (e) { flashMsg(false, e.message); return false; }
+}
+async function startGame() {
+  const btn = $("startBtn");
+  btn.disabled = true;
+  try {
+    const cfg = collectConfig();
+    await api("/api/config", "POST", cfg);
+    CONFIG = cfg;
+    const ids = cfg.players.filter(p => p.enabled).map(p => p.id);
+    if (!ids.length) throw new Error("enable at least one player");
+    const r = await api("/api/games", "POST",
+      {players: ids, grid: cfg.grid, max_moves: cfg.max_moves});
+    flashMsg(true, "Game started.");
+    pollGames();
+  } catch (e) { flashMsg(false, e.message); }
+  btn.disabled = false;
+}
+async function gameAction(id, action) {
+  try { await api("/api/games/" + id + "/" + action, "POST"); pollGames(); }
+  catch (e) { flashMsg(false, e.message); }
+}
+
+/* ---------- live games ---------- */
+function drawBoard(cv, f, grid, color) {
+  const ctx = cv.getContext("2d"), n = grid, cell = cv.width / n;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.strokeStyle = "#1c2630"; ctx.lineWidth = 1;
+  for (let i = 1; i < n; i++) {
+    ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, cv.height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(cv.width, i * cell); ctx.stroke();
+  }
+  if (f.food) {
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.arc((f.food[0] + .5) * cell, (f.food[1] + .5) * cell, cell * .38, 0, 7);
+    ctx.fill();
+  }
+  (f.snake || []).forEach((s, i) => {
+    ctx.fillStyle = i === 0 ? color : color + "aa";
+    const p = cell * .12;
+    ctx.fillRect(s[0] * cell + p, s[1] * cell + p, cell - 2 * p, cell - 2 * p);
+  });
+}
+function overlayText(p) {
+  if (!p.done) return null;
+  if (p.failed) return "FAILED";
+  if (p.death === "stopped") return "STOPPED";
+  if (p.death === "max_moves") return "SURVIVED";
+  if (p.death) return "DIED \u00b7 " + p.death.replace(/_/g, " ").toUpperCase();
+  return "DONE";
+}
+async function pollGames() {
+  let games;
+  try { games = await api("/api/games"); }
+  catch (e) { return; }
+  const wrap = $("games");
+  if (!games.length) {
+    wrap.innerHTML = '<div class="sub">No games yet. Configure players above and hit Start.</div>';
+    return;
+  }
+  wrap.innerHTML = "";
+  games.forEach(g => {
+    const card = document.createElement("div");
+    card.className = "gcard";
+    const st = g.status.toUpperCase();
+    let head = '<div class="ghead"><b>Game ' + esc(g.stamp) + '</b>' +
+      '<span class="badge ' + g.status + '">' + st + '</span>' +
+      '<span class="sub">' + g.grid + "x" + g.grid + " \u00b7 max " + g.max_moves + " moves</span>" +
+      '<span class="spacer"></span>';
+    if (g.status === "running")
+      head += '<button onclick="gameAction(\'' + g.id + '\',\'pause\')">\u275a\u275a Pause</button>';
+    if (g.status === "paused")
+      head += '<button onclick="gameAction(\'' + g.id + '\',\'resume\')">\u25b6 Resume</button>';
+    if (g.status === "running" || g.status === "paused")
+      head += '<button class="danger" onclick="gameAction(\'' + g.id + '\',\'stop\')">Stop</button>';
+    head += "</div>";
+    let arena = '<div class="arena">';
+    Object.entries(g.players).forEach(([pid, p]) => {
+      const f = p.frames.length ? p.frames[p.frames.length - 1]
+        : {snake: [], food: null, score: 0, steps: 0};
+      const lat = f.lat_ms ? f.lat_ms + " ms" : "\u2014";
+      const ov = overlayText(p);
+      arena += '<div class="panel"><h2 style="color:' + esc(p.color) + '">' + esc(p.label) +
+        ' <span class="tag">' + esc(p.tag) + " \u00b7 " + esc(p.model) + '</span></h2>' +
+        '<div class="statline">Score <b>' + f.score + '</b> Step <b>' + f.steps + '</b> ' +
+        'Calls <b>' + p.calls + '</b> Avg <b>' + p.avg_ms + ' ms</b>' +
+        (p.errors ? ' Err <b style="color:#ef4444">' + p.errors + '</b>' : "") + '</div>' +
+        '<div class="dead"><canvas width="360" height="360" data-board="' + pid + '"></canvas>' +
+        (ov ? '<div class="overlay">' + esc(ov) + '</div>' : "") + '</div>' +
+        (p.failed ? '<div class="perr">' + esc(p.failed) + '</div>' : "") +
+        (p.last_error && !p.failed && !p.done ? '<div class="perr">last error: ' + esc(p.last_error) + '</div>' : "") +
+        '</div>';
+      card._frames = card._frames || {};
+      card._frames[pid] = {f, grid: g.grid, color: p.color};
+    });
+    arena += "</div>";
+    card.innerHTML = head + arena;
+    wrap.appendChild(card);
+    card.querySelectorAll("canvas[data-board]").forEach(cv => {
+      const fr = card._frames[cv.dataset.board];
+      drawBoard(cv, fr.f, fr.grid, fr.color);
+    });
+  });
+}
+
+/* ---------- recordings ---------- */
+let RECS = [];
+async function loadRecordingList() {
+  try { RECS = await api("/api/recordings"); } catch (e) { return; }
+  const sel = $("recSel");
+  sel.innerHTML = "";
+  RECS.forEach(r => {
+    const o = document.createElement("option");
+    const parts = Object.entries(r.players).map(([pid, p]) =>
+      pid + " " + p.score + " food/" + p.steps + " steps");
+    o.value = r.file;
+    o.textContent = (r.live ? "[live] " : "") + r.stamp + " \u00b7 " + parts.join(" \u00b7 ");
+    sel.appendChild(o);
+  });
+  if (RECS.length) loadRecording(RECS[0].file);
+  else $("replay").innerHTML = '<div class="sub">No recordings yet.</div>';
+}
+function playerMeta(pid, data) {
+  const fromCfg = (CONFIG && CONFIG.players.find(p => p.id === pid)) || {};
+  const models = (data && data.models) || {};
+  return {
+    label: fromCfg.label || {jev: "Jev", laya: "Laya", qwen: "Qwen"}[pid] || pid,
+    color: fromCfg.color || {jev: "#4ade80", laya: "#f5a623", qwen: "#a78bfa"}[pid] || "#888888",
+    tag: fromCfg.tag || models[pid] || "",
+  };
+}
+let RP = null;
+async function loadRecording(file) {
+  const data = await api("/api/recordings/" + encodeURIComponent(file));
+  if (RP && RP.timer) clearInterval(RP.timer);
+  const pids = Object.keys(data.results || {});
+  RP = {data, pids, gameIdx: 0, frameIdx: {}, playing: true, speed: 2, timer: null};
+  pids.forEach(b => RP.frameIdx[b] = 0);
+  renderReplayShell();
+  selectReplayGame(0);
+}
+function renderReplayShell() {
+  const {data, pids} = RP;
+  const nGames = (data.results[pids[0]] || []).length;
+  let btns = "";
+  for (let i = 0; i < nGames; i++)
+    btns += '<button data-g="' + i + '" onclick="selectReplayGame(' + i + ')">Game ' + (i + 1) + '</button>';
+  let panels = "";
+  pids.forEach(pid => {
+    const m = playerMeta(pid, data);
+    panels += '<div class="panel"><h2 style="color:' + esc(m.color) + '">' + esc(m.label) +
+      ' <span class="tag">' + esc(m.tag) + '</span></h2>' +
+      '<div class="statline" id="rstats-' + pid + '"></div>' +
+      '<div class="dead"><canvas id="rcv-' + pid + '" width="360" height="360"></canvas>' +
+      '<div class="overlay" id="rov-' + pid + '" style="display:none"></div></div></div>';
+  });
+  let stamp = data.stamp || "";
+  const sm = stamp.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/);
+  const when = sm ? sm[1] + "-" + sm[2] + "-" + sm[3] + " " + sm[4] + ":" + sm[5] + ":" + sm[6] : stamp;
+  $("replay").innerHTML =
+    '<div class="sub">' + (data.live ? "[live game] " : "") + "Recorded " + esc(when) +
+    " \u00b7 " + data.grid + "x" + data.grid + " board \u00b7 one model call per move</div>" +
+    '<div class="controls"><span>' + btns + '</span>' +
+    '<button id="rplaybtn" onclick="toggleReplay()">\u275a\u275a Pause</button>' +
+    '<button onclick="selectReplayGame(RP.gameIdx)">\u21bb Restart</button>' +
+    '<label>Speed <input type="range" id="rspeed" min="0.5" max="8" step="0.5" value="2" ' +
+    'oninput="RP.speed=parseFloat(this.value);document.getElementById(\'rspeedval\').textContent=this.value+\'x\';if(RP.playing)setReplayPlaying(true)">' +
+    ' <span id="rspeedval">2x</span></label></div>' +
+    '<div class="arena">' + panels + '</div>' +
+    '<div class="verdict" id="rverdict"></div>' +
+    '<h2 style="font-size:1rem;margin:18px 0 0">Move stats</h2>' +
+    '<table id="rstattable"><tr><th>Player</th><th>Game</th><th>Food</th><th>Steps</th><th>Outcome</th>' +
+    '<th>Avg latency</th><th>p95 latency</th><th>Errors</th></tr></table>';
+  // stats + verdict
+  let rows = "";
+  const tot = {};
+  pids.forEach(pid => {
+    tot[pid] = {lat: [], food: 0, steps: 0, err: 0};
+    (data.results[pid] || []).forEach((g, i) => {
+      tot[pid].lat.push(...g.frames.slice(1).map(f => f.lat_ms).filter(x => x > 0));
+      tot[pid].food += g.score; tot[pid].steps += g.steps; tot[pid].err += g.errors || 0;
+      rows += "<tr><td>" + esc(playerMeta(pid, data).label) + "</td><td>" + (i + 1) + "</td><td>" +
+        g.score + "</td><td>" + g.steps + "</td><td>" +
+        (g.death ? "died: " + String(g.death).replace(/_/g, " ") : "survived") + "</td><td>" +
+        (g.lat ? g.lat.avg_ms : 0) + " ms</td><td>" + (g.lat ? g.lat.p95_ms : 0) + " ms</td><td>" +
+        (g.errors || 0) + "</td></tr>";
+    });
+  });
+  $("rstattable").innerHTML += rows;
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  const spd = pids.map(b => [b, avg(tot[b].lat)]).sort((a, b) => a[1] - b[1]);
+  const skl = pids.map(b => [b, tot[b].food]).sort((a, b) => b[1] - a[1]);
+  $("rverdict").innerHTML =
+    "<b>Speed:</b> " + spd.map(s => esc(playerMeta(s[0], data).label) + " " + Math.round(s[1]) + " ms/move").join(" &lt; ") + "." +
+    "<br><b>Skill:</b> " + skl.map(s => esc(playerMeta(s[0], data).label) + " ate " + tot[s[0]].food +
+      " food over " + tot[s[0]].steps + " steps").join("; ") + ".";
+}
+function replayGame(pid) { return RP.data.results[pid][RP.gameIdx]; }
+function replayFrame(pid) {
+  const g = replayGame(pid);
+  return g.frames[Math.min(RP.frameIdx[pid], g.frames.length - 1)];
+}
+function drawReplay(pid) {
+  const m = playerMeta(pid, RP.data);
+  drawBoard($("rcv-" + pid), replayFrame(pid), RP.data.grid, m.color);
+  const f = replayFrame(pid), g = replayGame(pid);
+  const done = RP.frameIdx[pid] >= g.frames.length - 1;
+  const ov = $("rov-" + pid);
+  if (done && g.death && g.death !== "max_moves") {
+    ov.style.display = "flex"; ov.textContent = "DIED \u00b7 " + String(g.death).replace(/_/g, " ").toUpperCase();
+  } else if (done) { ov.style.display = "flex"; ov.textContent = "SURVIVED"; }
+  else ov.style.display = "none";
+  $("rstats-" + pid).innerHTML = "Score <b>" + f.score + "</b> Step <b>" + f.steps + "</b> Last move <b>" +
+    (f.lat_ms ? f.lat_ms + " ms" : "\u2014") + "</b>" + (f.err ? ' <b style="color:#ef4444">err</b>' : "");
+}
+function replayTick() {
+  let alive = false;
+  RP.pids.forEach(pid => {
+    if (RP.frameIdx[pid] < replayGame(pid).frames.length - 1) { RP.frameIdx[pid]++; alive = true; }
+    drawReplay(pid);
+  });
+  if (!alive) setReplayPlaying(false);
+}
+function setReplayPlaying(p) {
+  RP.playing = p;
+  $("rplaybtn").innerHTML = p ? "\u275a\u275a Pause" : "\u25b6 Play";
+  if (RP.timer) clearInterval(RP.timer);
+  if (p) RP.timer = setInterval(replayTick, 500 / RP.speed);
+}
+function toggleReplay() { setReplayPlaying(!RP.playing); }
+function selectReplayGame(i) {
+  RP.gameIdx = i;
+  RP.pids.forEach(pid => RP.frameIdx[pid] = 0);
+  document.querySelectorAll("#replay [data-g]").forEach(el =>
+    el.classList.toggle("active", +el.dataset.g === i));
+  RP.pids.forEach(drawReplay);
+  setReplayPlaying(true);
+}
+
+/* ---------- boot ---------- */
+loadConfig().catch(e => flashMsg(false, "config: " + e.message));
+pollGames();
+setInterval(pollGames, 1200);
+</script>
+</body>
+</html>

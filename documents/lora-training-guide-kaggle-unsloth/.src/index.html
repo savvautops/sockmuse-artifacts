@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoRA Fine-Tuning with Unsloth</title>
+<style>
+@page{size:A4;margin:0}*{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact}body{margin:0;background:#d9dde3;color:#16202a;font-family:'Liberation Sans','Noto Sans',sans-serif}.page{position:relative;width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;margin:0 auto 8mm;padding:18mm 18mm 16mm;background:#fff;page-break-after:always}.page:last-child{page-break-after:auto}.cover{background:#0d1b2a;color:#f7fbff;padding:24mm 20mm}.cover:before{content:"";position:absolute;left:0;top:0;bottom:0;width:8mm;background:#2dd4bf}.kicker{font-size:9pt;letter-spacing:2.2px;text-transform:uppercase;color:#2dd4bf;font-weight:700}.cover h1{font-size:31pt;line-height:1.05;margin:28mm 0 7mm;max-width:165mm}.cover .deck{font-size:16pt;line-height:1.4;color:#cbd5e1;max-width:148mm}.cover .route{position:absolute;left:20mm;right:20mm;bottom:36mm;border-top:1px solid #40536a;padding-top:7mm;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7mm}.cover .route b{display:block;color:#fff;font-size:11pt}.cover .route span{font-size:9pt;color:#aebdca}.cover .meta{position:absolute;bottom:17mm;left:20mm;right:20mm;display:flex;justify-content:space-between;color:#93a4b8;font-size:8.5pt}h1,h2,h3{margin-top:0}h2{font-size:20pt;line-height:1.15;color:#0d1b2a;margin-bottom:5mm}h3{font-size:12.5pt;line-height:1.2;color:#0f766e;margin:5mm 0 2mm}p,li{font-size:10.2pt;line-height:1.48}p{margin:0 0 3.2mm}ul,ol{margin:1.5mm 0 4mm 5mm;padding-left:4mm}li{margin:1.2mm 0}.lede{font-size:12pt;line-height:1.5;color:#314355}.rule{height:1px;background:#d7dee6;margin:4mm 0}.callout{border-left:3px solid #2dd4bf;background:#eefbf8;padding:4mm 5mm;margin:4mm 0}.warn{border-left-color:#f59e0b;background:#fff8e8}.danger{border-left-color:#ef4444;background:#fff1f1}.label{font-size:8pt;text-transform:uppercase;letter-spacing:1.1px;font-weight:700;color:#0f766e}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}.steps{counter-reset:s}.step{display:grid;grid-template-columns:9mm 1fr;gap:3mm;margin:4mm 0}.step:before{counter-increment:s;content:attr(data-n);width:8mm;height:8mm;border-radius:50%;display:grid;place-items:center;background:#0f766e;color:#fff;font-size:8pt;font-weight:700}table{width:100%;border-collapse:collapse;margin:3mm 0 5mm;font-size:9pt}th{text-align:left;background:#0d1b2a;color:#fff;padding:2.5mm}td{border-bottom:1px solid #dce3ea;padding:2.4mm;vertical-align:top}tr:nth-child(even) td{background:#f6f8fa}code,pre{font-family:'Liberation Mono',monospace}code{background:#eef2f5;padding:.2mm .8mm;border-radius:1mm;font-size:.92em}pre{background:#111827;color:#dbeafe;padding:4mm;border-radius:2mm;white-space:pre-wrap;overflow-wrap:anywhere;font-size:8.2pt;line-height:1.38;margin:3mm 0}.small{font-size:8.7pt;color:#526171}.tight p,.tight li{font-size:10pt;line-height:1.42}.toc{columns:2;column-gap:10mm}.toc div{break-inside:avoid;border-bottom:1px solid #dce3ea;padding:2.6mm 0;font-size:10pt}.toc b{display:inline-block;width:8mm;color:#0f766e}.footer{position:absolute;left:18mm;right:18mm;bottom:7mm;display:flex;justify-content:space-between;border-top:1px solid #dce3ea;padding-top:2mm;font-size:8pt;color:#64748b}.check{color:#0f766e;font-weight:700}.flow{display:flex;align-items:center;gap:3mm;margin:6mm 0}.flow span{flex:1;padding:4mm 2mm;text-align:center;background:#eef2f5;border:1px solid #d5dde5;border-radius:2mm;font-size:9pt;font-weight:700}.flow i{font-style:normal;color:#0f766e}.page-no:after{content:counter(page)}a{color:#0f766e;overflow-wrap:anywhere;word-break:break-word}</style></head><body>
+<section class="page cover"><div class="kicker">Command-first field guide</div><h1>LoRA Fine-Tuning with Unsloth</h1><p class="deck">A practical pipeline for Kaggle GPUs and a local RTX 3060 12GB, from JSONL to a tested, swappable adapter.</p><div class="route"><div><b>Prepare</b><span>Choose one base, build clean role data.</span></div><div><b>Train</b><span>Run the same QLoRA script on Kaggle or local CUDA.</span></div><div><b>Ship</b><span>Evaluate, keep the adapter, export only what serving needs.</span></div></div><div class="meta"><span>Version 1.0</span><span>25 September 2026</span></div></section>
+<section class="page"><div class="label">Guide map</div><h2>From raw examples to a deployable adapter</h2><p class="lede">Start with Qwen3-4B to prove the loop. Move to an 8B model only after the dataset, evaluator, and export path work.</p><div class="flow"><span>JSONL</span><i>→</i><span>tokenize</span><i>→</i><span>QLoRA</span><i>→</i><span>evaluate</span><i>→</i><span>adapter / GGUF</span></div><div class="toc"><div><b>01</b> LoRA and QLoRA</div><div><b>02</b> Pick the base model</div><div><b>03</b> Build the dataset</div><div><b>04</b> Kaggle setup</div><div><b>05</b> Training script</div><div><b>06</b> Kaggle run cycle</div><div><b>07</b> RTX 3060 path</div><div><b>08</b> Export and serve</div><div><b>09</b> Evaluate</div><div><b>10</b> Troubleshoot</div><div><b>11</b> Lawyer adapter example</div><div><b>12</b> Command sheet</div></div><div class="callout"><b>Default first run:</b> Qwen3-4B, sequence length 2,048, rank 16, micro-batch 2, accumulation 4, one epoch, 90/10 train/eval split.</div><div class="footer"><span>LoRA with Unsloth</span><span>2</span></div></section>
+<section class="page"><div class="label">01 / Mechanics</div><h2>LoRA trains the delta, not the whole model</h2><p class="lede">Low-Rank Adaptation (LoRA) freezes the pretrained model and learns small update matrices beside selected linear layers. The original weights stay intact.</p><div class="flow"><span>Frozen weight W</span><i>+</i><span>Low-rank A × B</span><i>=</i><span>Role behavior</span></div><div class="grid2"><div><h3>LoRA</h3><ul><li>The base model normally remains in FP16 or BF16 during training.</li><li>Only adapter parameters receive gradient updates.</li><li>The saved adapter is usually tens to hundreds of megabytes, depending on model size, rank, and target modules.</li><li>At inference, load it beside the matching base or merge it into a standalone model.</li></ul></div><div><h3>QLoRA</h3><ul><li>The frozen base is loaded in 4-bit form.</li><li>LoRA parameters still train at a higher working precision.</li><li>Memory drops enough to make 4B to 8B experiments practical on modest GPUs.</li><li>The quality tradeoff is normally smaller than full low-bit training because the base remains frozen.</li></ul></div></div><div class="callout"><b>The mental model:</b> the base carries language and general capability. The adapter nudges behavior, format, vocabulary, and task patterns. It is not a reliable database of current facts.</div><h3>What the key settings control</h3><table><tr><th>Setting</th><th>Meaning</th><th>Starting point</th></tr><tr><td><code>r</code></td><td>Capacity of each low-rank update</td><td>16</td></tr><tr><td><code>lora_alpha</code></td><td>Scale applied to the update</td><td>16</td></tr><tr><td><code>target_modules</code></td><td>Linear layers that receive adapters</td><td>Attention + MLP projections</td></tr><tr><td><code>load_in_4bit</code></td><td>Quantizes the frozen base</td><td><code>True</code></td></tr></table><div class="footer"><span>LoRA with Unsloth</span><span>3</span></div></section>
+<section class="page"><div class="label">02 / Model selection</div><h2>Standardize the fleet on one base checkpoint</h2><p class="lede">A LoRA adapter is tied to the architecture and usually the exact base checkpoint it was trained against. A Qwen adapter does not load on Llama, and even a nearby revision can break tensor names or behavior.</p><table><tr><th>Candidate</th><th>Best first use</th><th>Practical training note</th></tr><tr><td>Qwen3-4B Instruct</td><td>Fast pipeline proof, tool or role behavior</td><td>Easy starting point on 12 to 16 GB</td></tr><tr><td>Qwen3-8B</td><td>Higher-quality role adapter after proof</td><td>Start micro-batch 1 or 2 at 2,048 tokens</td></tr><tr><td>Llama 3.1 8B Instruct</td><td>Llama ecosystem compatibility</td><td>License terms and gated access may apply</td></tr></table><h3>Hardware planning</h3><table><tr><th>Target</th><th>Suggested workload</th><th>Starting values</th></tr><tr><td>Kaggle T4, 16 GB</td><td>4B to 8B QLoRA</td><td>batch 2, accumulation 4</td></tr><tr><td>Kaggle P100, 16 GB</td><td>4B to 8B if the software stack supports Pascal</td><td>verify CUDA capability first</td></tr><tr><td>Local RTX 3060, 12 GB</td><td>4B comfortably, 7B to 8B carefully</td><td>batch 1 to 2, checkpointing on</td></tr></table><div class="callout warn"><b>Hardware name:</b> the 12 GB card is the NVIDIA GeForce RTX 3060, not GTX 3060. For an 8B run, batch 2 to 4 is only realistic when sequence length, packing, and data shape cooperate. Start at 1 or 2, then increase after measuring peak VRAM.</div><h3>Decision rule</h3><ol><li>Choose the smallest instruct model that can pass your baseline tasks.</li><li>Record the exact model repository and revision in every adapter manifest.</li><li>Keep tokenizer, chat template, and base revision identical at training and inference.</li></ol><div class="footer"><span>LoRA with Unsloth</span><span>4</span></div></section>
+<section class="page"><div class="label">03 / Data</div><h2>The dataset decides what the adapter becomes</h2><p class="lede">For a narrow role adapter, 5,000 to 20,000 clean instruction-response pairs is a sensible working range, not a guarantee. Diversity, correctness, and coverage matter more than row count.</p><div class="grid2"><div><h3>Source mix</h3><ul><li><b>Public-domain corpora:</b> use only material whose license and provenance you can record.</li><li><b>Existing instruction sets:</b> verify task fit and redistribution terms.</li><li><b>Synthetic examples:</b> generate cheaply with DeepSeek, then filter, deduplicate, and review samples.</li></ul></div><div><h3>Split before tuning</h3><ul><li>Reserve 10 percent for evaluation.</li><li>Keep near-duplicates in the same split.</li><li>Create a separate challenge set for edge cases and refusals.</li><li>Never tune against the final certification exam.</li></ul></div></div><h3>Alpaca JSONL</h3><p>One JSON object per line, UTF-8, with <code>instruction</code>, optional <code>input</code>, and <code>output</code>.</p><pre>{"instruction":"Summarize the clause in plain language.","input":"The license terminates upon material breach...","output":"The license can end if a serious breach is not fixed under the agreement's cure terms."}
+{"instruction":"Ask the missing questions before answering.","input":"Can I terminate this contract?","output":"Which jurisdiction governs, what termination clause applies, and has either party breached?"}
+{"instruction":"Decline a request outside the role.","input":"Guarantee I will win this case.","output":"I cannot guarantee an outcome. I can help identify issues and questions to discuss with a licensed lawyer."}</pre><h3>Quality gates before training</h3><ul><li>Parse every line as JSON and require non-empty instruction and output.</li><li>Normalize whitespace, remove exact duplicates, and hash rows for traceability.</li><li>Scan for secrets, personal data, prompt injection, and unlicensed copied text.</li><li>Manually inspect a random sample from every source and category.</li><li>Store <code>source_id</code>, license, generator model, and review status outside the training text.</li></ul><div class="footer"><span>LoRA with Unsloth</span><span>5</span></div></section>
+<section class="page"><div class="label">04 / Kaggle setup</div><h2>Authenticate once, then run Kaggle as a batch backend</h2><p class="lede">Kaggle CLI authentication is token-based, not OAuth, for this workflow. The legacy <code>kaggle.json</code> contains a username and API key, so treat it as a secret.</p><div class="step" data-n="1"><div><h3>Create the token</h3><p>In Kaggle, open Settings, find API, choose Create New Token, and download <code>kaggle.json</code>. Do not paste its contents into chat, source control, or notebook cells.</p></div></div><div class="step" data-n="2"><div><h3>Install it on the machine that runs the CLI</h3><pre>mkdir -p ~/.kaggle
+install -m 600 /path/to/downloaded/kaggle.json ~/.kaggle/kaggle.json
+python -m pip install --upgrade kaggle
+kaggle --version</pre></div></div><div class="step" data-n="3"><div><h3>Verify without changing anything</h3><pre>kaggle kernels list --mine | head</pre></div></div><div class="callout danger"><b>Credential rule:</b> add <code>.kaggle/</code>, <code>kaggle.json</code>, and environment files to ignore rules. Rotate the token if it reaches a repository, notebook output, log, or shared drive.</div><h3>Budget the run</h3><p>Free-tier quotas and session ceilings change. A practical planning assumption is roughly 30 GPU-hours per week and a run that must finish within about 9 hours. Check the current Kaggle account quota before launching. Enable Internet only when the notebook must install packages or fetch models.</p><div class="footer"><span>LoRA with Unsloth</span><span>6</span></div></section>
+<section class="page"><div class="label">04 / Kaggle kernel</div><h2>Package the run as code, metadata, and data</h2><p>Use a private script kernel for repeatable runs. Keep outputs under <code>/kaggle/working</code>, because that directory is collected as kernel output.</p><h3>Directory layout</h3><pre>kaggle-lora/
+├── kernel-metadata.json
+├── train.py
+└── train.jsonl          # or attach a private Kaggle Dataset</pre><h3>kernel-metadata.json</h3><pre>{
+  "id": "YOUR_KAGGLE_USERNAME/qwen3-role-lora",
+  "title": "Qwen3 Role LoRA",
+  "code_file": "train.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}</pre><div class="callout"><b>Safer data path:</b> upload the JSONL as a private Kaggle Dataset and list it in <code>dataset_sources</code>. Then point <code>DATA_PATH</code> at its mounted path under <code>/kaggle/input</code>. This keeps code and data versioned separately.</div><h3>First smoke checks inside train.py</h3><pre>import os, torch
+print("CUDA available:", torch.cuda.is_available())
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+    print("Capability:", torch.cuda.get_device_capability(0))
+print("Data exists:", os.path.exists(os.environ.get("DATA_PATH", "train.jsonl")))</pre><p class="small">P100 is a Pascal GPU. If the current Kaggle PyTorch, bitsandbytes, or Unsloth build rejects its compute capability, select a T4 or pin a compatible environment rather than repeatedly debugging model code.</p><div class="footer"><span>LoRA with Unsloth</span><span>7</span></div></section>
+<section class="page tight"><div class="label">05 / Training script, part 1</div><h2>Load 4-bit Qwen and format every example with its chat template</h2><p>In a Kaggle script kernel, install dependencies before imports. On local CUDA, install the matching stack once in the environment instead.</p><pre># Kaggle only, place before imports
+import subprocess, sys
+subprocess.check_call([
+    sys.executable, "-m", "pip", "install", "-qU",
+    "unsloth", "datasets", "trl", "accelerate"
+])</pre><pre>import os, torch
+from datasets import load_dataset
+from unsloth import FastLanguageModel, is_bfloat16_supported
+
+MODEL = os.getenv(
+    "MODEL_ID",
+    "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit",
+)
+DATA_PATH = os.getenv("DATA_PATH", "train.jsonl")
+OUTPUT = "/kaggle/working/role-lora" if os.path.exists("/kaggle") \
+         else "./role-lora"
+MAX_SEQ = int(os.getenv("MAX_SEQ_LENGTH", "2048"))
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name=MODEL,
+    max_seq_length=MAX_SEQ,
+    dtype=None,
+    load_in_4bit=True,
+)
+
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=16,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                    "gate_proj", "up_proj", "down_proj"],
+    lora_alpha=16,
+    lora_dropout=0,
+    bias="none",
+    use_gradient_checkpointing="unsloth",
+    random_state=3407,
+)</pre><div class="footer"><span>LoRA with Unsloth</span><span>8</span></div></section>
+<section class="page tight"><div class="label">05 / Training script, part 2</div><h2>Format the dataset and define the training run</h2><pre>from trl import SFTTrainer, SFTConfig
+
+def to_text(row):
+    user = row["instruction"]
+    if row.get("input", "").strip():
+        user += "\n\nContext:\n" + row["input"].strip()
+    messages = [
+        {"role": "user", "content": user},
+        {"role": "assistant", "content": row["output"]},
+    ]
+    return {"text": tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=False
+    )}
+
+data = load_dataset("json", data_files=DATA_PATH, split="train")
+data = data.map(to_text)
+splits = data.train_test_split(test_size=0.10, seed=3407)
+
+args = SFTConfig(
+    output_dir=OUTPUT,
+    dataset_text_field="text",
+    max_length=MAX_SEQ,
+    per_device_train_batch_size=2,
+    per_device_eval_batch_size=2,
+    gradient_accumulation_steps=4,
+    num_train_epochs=1,
+    learning_rate=2e-4,
+    warmup_ratio=0.03,
+    logging_steps=10,
+    eval_strategy="steps",
+    eval_steps=100,
+    save_strategy="steps",
+    save_steps=100,
+    save_total_limit=2,
+    optim="adamw_8bit",
+    weight_decay=0.01,
+    lr_scheduler_type="linear",
+    fp16=not is_bfloat16_supported(),
+    bf16=is_bfloat16_supported(),
+    packing=True,
+    report_to="none",
+    seed=3407,
+)</pre><div class="footer"><span>LoRA with Unsloth</span><span>9</span></div></section>
+<section class="page"><div class="label">05 / Training script, part 3</div><h2>Train, evaluate, and save the adapter</h2><pre>trainer = SFTTrainer(
+    model=model,
+    processing_class=tokenizer,
+    train_dataset=splits["train"],
+    eval_dataset=splits["test"],
+    args=args,
+)
+
+trainer.train()
+metrics = trainer.evaluate()
+print(metrics)
+
+model.save_pretrained(OUTPUT + "/adapter")
+tokenizer.save_pretrained(OUTPUT + "/adapter")</pre><h3>Smoke-test before spending hours</h3><ol><li>Temporarily train on 20 to 100 rows.</li><li>Confirm loss is finite and generally moving down.</li><li>Confirm evaluation executes and an adapter is written.</li><li>Reload the saved adapter against the exact base model.</li><li>Only then launch the complete dataset.</li></ol><div class="callout warn"><b>Version drift:</b> TRL occasionally renames configuration arguments. If <code>max_length</code> or <code>eval_strategy</code> is rejected, inspect <code>python -c "from trl import SFTConfig; help(SFTConfig)"</code> in that exact environment, then change only the rejected field.</div><div class="callout"><b>Effective batch:</b> micro-batch 2 multiplied by accumulation 4 gives an effective batch of 8 examples per optimizer update on one GPU.</div><div class="footer"><span>LoRA with Unsloth</span><span>10</span></div></section>
+<section class="page"><div class="label">06 / Kaggle run cycle</div><h2>Push, inspect, and pull the adapter</h2><h3>Launch the kernel</h3><pre>cd kaggle-lora
+kaggle kernels push -p .</pre><h3>Track the run</h3><pre>kaggle kernels status YOUR_KAGGLE_USERNAME/qwen3-role-lora
+kaggle kernels logs YOUR_KAGGLE_USERNAME/qwen3-role-lora</pre><h3>Download output</h3><pre>mkdir -p ./kaggle-output
+kaggle kernels output \
+  YOUR_KAGGLE_USERNAME/qwen3-role-lora \
+  -p ./kaggle-output</pre><h3>Confirm the adapter is complete</h3><pre>find ./kaggle-output -maxdepth 3 -type f -printf '%P\n' | sort
+# Expect adapter_config.json, adapter_model.safetensors,
+# tokenizer files, and trainer/checkpoint metadata.</pre><div class="grid2"><div><h3>Before a full run</h3><ul><li>Run 20 to 100 examples.</li><li>Set one epoch.</li><li>Confirm GPU name and peak memory.</li><li>Confirm output files download.</li></ul></div><div><h3>Before quota resets</h3><ul><li>Pull every completed output.</li><li>Keep mid-run checkpoints.</li><li>Record the kernel version.</li><li>Do not rely on session storage.</li></ul></div></div><div class="callout"><b>Time estimate:</b> “A few hours” for 10,000 examples on an 8B model is only a planning estimate. Token count, packing, GPU assignment, evaluation cadence, and sequence length dominate runtime. Measure a 100-step sample and extrapolate.</div><div class="footer"><span>LoRA with Unsloth</span><span>11</span></div></section>
+<section class="page"><div class="label">07 / Local RTX 3060</div><h2>Use the NucBox for fast iteration and private data</h2><p class="lede">The RTX 3060 12GB is a good local QLoRA target. Prove the environment with Qwen3-4B, then test an 8B model with conservative memory settings.</p><h3>Create an isolated environment</h3><pre>nvidia-smi
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -U torch
+python -m pip install -U unsloth datasets trl accelerate
+python - <<'PY'
+import torch
+print("torch", torch.__version__)
+print("CUDA build", torch.version.cuda)
+print("available", torch.cuda.is_available())
+print("GPU", torch.cuda.get_device_name(0) if torch.cuda.is_available() else None)
+PY</pre><p class="small">Use the PyTorch installer selector if the generic wheel does not match the installed NVIDIA driver. A locally installed CUDA toolkit does not have to equal <code>torch.version.cuda</code>, but the driver must support the wheel.</p><h3>Run the same script</h3><pre>export DATA_PATH="$PWD/train.jsonl"
+export MODEL_ID="unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit"
+export MAX_SEQ_LENGTH=2048
+python train.py</pre><h3>Watch memory and thermals</h3><pre>watch -n 1 nvidia-smi</pre><div class="callout"><b>Keep the two backends identical:</b> same data hash, model revision, seed, tokenizer, chat template, rank, learning rate, and split. Change only the settings required by hardware.</div><div class="footer"><span>LoRA with Unsloth</span><span>12</span></div></section>
+<section class="page"><div class="label">07 / VRAM survival</div><h2>Reduce sequence memory before reducing adapter capacity</h2><p class="lede">When an 8B run fails on 12 GB, make one change at a time in this order.</p><ol><li><b>Drop micro-batch to 1.</b> Preserve the effective batch with more gradient accumulation.</li><li><b>Shorten sequence length.</b> Move from 2,048 to 1,536 or 1,024. Attention memory grows rapidly with sequence length.</li><li><b>Keep gradient checkpointing on.</b> <code>"unsloth"</code> trades extra compute for lower activation memory.</li><li><b>Use the 8-bit optimizer.</b> Keep <code>optim="adamw_8bit"</code>.</li><li><b>Disable evaluation during the smoke run.</b> Restore it for the real run.</li><li><b>Only then lower rank.</b> Try <code>r=8</code> if capacity is still too expensive.</li></ol><h3>Known-good starting grid</h3><table><tr><th>Model</th><th>Sequence</th><th>Micro-batch</th><th>Accumulation</th></tr><tr><td>Qwen3-4B</td><td>2,048</td><td>2 to 4</td><td>2 to 4</td></tr><tr><td>Qwen3-8B</td><td>2,048</td><td>1 to 2</td><td>4 to 8</td></tr><tr><td>8B, OOM fallback</td><td>1,024</td><td>1</td><td>8 to 16</td></tr></table><div class="callout warn"><b>Do not promise runtime from row count alone:</b> 10,000 examples could mean 2 million or 20 million tokens. Run 100 steps, record seconds per step, include evaluation and saving overhead, then estimate. “A few hours” is plausible for a tuned 8B run, not guaranteed.</div><h3>Reproducibility record</h3><pre>nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv
+python -m pip freeze > environment.txt
+sha256sum train.jsonl > data.sha256</pre><div class="footer"><span>LoRA with Unsloth</span><span>13</span></div></section>
+<section class="page"><div class="label">08 / Export</div><h2>Keep the adapter as the source artifact</h2><p class="lede">The PEFT adapter is the smallest, most flexible deliverable. Preserve it even if you also produce a merged model or GGUF.</p><h3>Option A, publish the adapter to Hugging Face Hub</h3><pre># Authenticate without putting the token in source
+hf auth login
+
+# In Python, after training
+model.push_to_hub("YOUR_USER/qwen3-role-lora")
+tokenizer.push_to_hub("YOUR_USER/qwen3-role-lora")</pre><h3>Option B, export a standalone GGUF for LM Studio</h3><pre># In Python, merges the active adapter for a standalone file
+model.save_pretrained_gguf(
+    "./role-model-gguf",
+    tokenizer,
+    quantization_method="q4_k_m",
+)</pre><p>Import the resulting GGUF into LM Studio. Use the same chat template used during training; a mismatch can make a good adapter look broken.</p><h3>Option C, hot-swap the adapter</h3><pre># Convert a PEFT adapter with the current llama.cpp converter
+python /path/to/llama.cpp/convert_lora_to_gguf.py \
+  ./role-lora/adapter --outfile ./role-lora.gguf
+
+# Run beside the matching base GGUF
+llama-cli -m ./matching-base.gguf --lora ./role-lora.gguf</pre><pre># vLLM serves PEFT adapters beside the matching Hugging Face base
+python -m vllm.entrypoints.openai.api_server \
+  --model YOUR_EXACT_BASE_ID \
+  --enable-lora \
+  --lora-modules role=./role-lora/adapter</pre><div class="callout"><b>Choose deliberately:</b> adapter for reuse and hot-swap, merged GGUF for a single-file local app, Hub repository for sharing and versioning. Record the base ID in all three.</div><div class="footer"><span>LoRA with Unsloth</span><span>14</span></div></section>
+<section class="page"><div class="label">09 / Evaluation</div><h2>A lower training loss is not a release decision</h2><p class="lede">Compare the adapter with the untouched base on examples neither model saw during training.</p><h3>Minimum release gate</h3><table><tr><th>Check</th><th>Measure</th><th>Pass condition</th></tr><tr><td>Held-out loss</td><td>Evaluation split</td><td>Plateaus or improves without divergence</td></tr><tr><td>Task score</td><td>Exact or rubric score</td><td>Beats the base on target tasks</td></tr><tr><td>Regression set</td><td>General instructions</td><td>No material capability collapse</td></tr><tr><td>Open-ended quality</td><td>Blind human rubric</td><td>Stable preference over base</td></tr><tr><td>Safety / boundaries</td><td>Adversarial prompts</td><td>Required refusals and escalation hold</td></tr></table><h3>Human-judge agreement</h3><p>For open-ended work, have two reviewers score a sample using the same rubric. Track agreement, adjudicate disagreements, and update the rubric before changing the model. An LLM judge can accelerate triage, but calibrate it against human labels.</p><h3>When to stop</h3><ul><li>Stop when evaluation loss plateaus while training loss keeps falling.</li><li>Stop when target-task gains flatten across checkpoints.</li><li>Stop immediately if general-task regressions or unsafe confident answers increase.</li><li>Keep the best checkpoint by evaluation result, not automatically the last checkpoint.</li></ul><div class="callout"><b>Certification rule:</b> training data, development prompts, and the final Agent School exam must be separate. Otherwise the certificate measures memorization.</div><div class="footer"><span>LoRA with Unsloth</span><span>15</span></div></section>
+<section class="page"><div class="label">10 / Troubleshooting</div><h2>Fix the environment or memory bottleneck before tuning hyperparameters</h2><table><tr><th>Symptom</th><th>Likely cause</th><th>First response</th></tr><tr><td>CUDA out of memory</td><td>Sequence or micro-batch too large</td><td>Batch 1, then shorter sequence</td></tr><tr><td><code>torch.cuda.is_available()</code> false</td><td>Driver or wrong PyTorch wheel</td><td>Check <code>nvidia-smi</code> and reinstall matching wheel</td></tr><tr><td>Unsupported GPU capability</td><td>P100 with incompatible current build</td><td>Use T4 or compatible pinned stack</td></tr><tr><td>Kaggle run stops</td><td>Session ceiling or quota</td><td>Shorten run, save checkpoints, resume</td></tr><tr><td>Model download is slow</td><td>Cold cache or Internet setting</td><td>Enable Internet, attach cached model data</td></tr><tr><td>Adapter will not load</td><td>Wrong architecture or base revision</td><td>Match exact base ID and tokenizer</td></tr><tr><td>Output loops or degrades</td><td>Template mismatch or overfit</td><td>Match chat template, inspect earlier checkpoint</td></tr><tr><td>Loss is <code>nan</code></td><td>Precision, bad rows, or high LR</td><td>Validate data, lower LR, check FP16/BF16</td></tr></table><h3>Fast diagnostics</h3><pre># GPU and process state
+nvidia-smi
+python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+
+# Dataset integrity
+python - <<'PY'
+import json
+for n, line in enumerate(open('train.jsonl', encoding='utf-8'), 1):
+    x = json.loads(line)
+    assert x.get('instruction') and x.get('output'), n
+print('JSONL OK')
+PY
+
+# Adapter identity
+python - <<'PY'
+import json
+x=json.load(open('role-lora/adapter/adapter_config.json'))
+print(x.get('base_model_name_or_path'), x.get('r'), x.get('target_modules'))
+PY</pre><div class="callout warn"><b>Debugging discipline:</b> preserve the failing command, package versions, GPU name, and first complete traceback. Do not “fix” several settings at once.</div><div class="footer"><span>LoRA with Unsloth</span><span>16</span></div></section>
+<section class="page"><div class="label">11 / Worked example</div><h2>A lawyer-role adapter needs retrieval, boundaries, and human review</h2><p class="lede">Use the adapter to shape legal issue-spotting, plain-language explanation, drafting structure, and uncertainty behavior. Do not use it as the source of current law.</p><h3>Training mix</h3><div class="grid2"><div class="callout"><div class="label">60 percent</div><h3>Legal instruction pairs</h3><p>Issue spotting, clause explanation, question generation, memo structure, and jurisdiction-aware analysis.</p></div><div><div class="callout"><div class="label">20 percent</div><h3>Boundaries and refusal</h3><p>“I am not a licensed attorney,” missing-fact questions, no outcome guarantees, emergency escalation.</p></div><div class="callout"><div class="label">20 percent</div><h3>General instruction</h3><p>Retain ordinary following, summarization, formatting, and tool-use behavior.</p></div></div></div><h3>Inference architecture</h3><div class="flow"><span>User question</span><i>→</i><span>jurisdiction filter</span><i>→</i><span>verified legal RAG</span><i>→</i><span>role adapter</span><i>→</i><span>citations + review</span></div><ul><li><b>Retrieval supplies facts:</b> statutes, regulations, cases, effective dates, and source URLs.</li><li><b>The adapter supplies behavior:</b> analysis pattern, tone, structured output, and boundary responses.</li><li><b>The application verifies citations:</b> reject any citation not present in retrieved sources.</li><li><b>A licensed professional reviews consequential output:</b> especially filings, deadlines, strategy, and jurisdiction-specific advice.</li></ul><div class="callout danger"><b>Known failure mode:</b> a fluent legal model can invent plausible case names and holdings. LoRA cannot solve that. Require source-grounded generation and a fail-closed citation checker.</div><div class="footer"><span>LoRA with Unsloth</span><span>17</span></div></section>
+<section class="page tight"><div class="label">12 / One-page cheat sheet</div><h2>The complete command path</h2><div class="grid2"><div><h3>Authenticate Kaggle</h3><pre>mkdir -p ~/.kaggle
+install -m 600 kaggle.json \
+  ~/.kaggle/kaggle.json
+python -m pip install -U kaggle
+kaggle kernels list --mine | head</pre><h3>Push and inspect</h3><pre>kaggle kernels push -p kaggle-lora
+kaggle kernels status \
+  USER/qwen3-role-lora
+kaggle kernels logs \
+  USER/qwen3-role-lora</pre><h3>Download output</h3><pre>kaggle kernels output \
+  USER/qwen3-role-lora \
+  -p ./kaggle-output</pre><h3>Validate JSONL</h3><pre>python - <<'PY'
+import json
+for n,l in enumerate(open('train.jsonl'),1):
+ x=json.loads(l)
+ assert x.get('instruction') and x.get('output'),n
+print('OK')
+PY</pre></div><div><h3>Local environment</h3><pre>nvidia-smi
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip torch
+python -m pip install -U \
+  unsloth datasets trl accelerate</pre><h3>Run locally</h3><pre>export DATA_PATH="$PWD/train.jsonl"
+export MODEL_ID="unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit"
+export MAX_SEQ_LENGTH=2048
+python train.py</pre><h3>Inspect and preserve</h3><pre>find role-lora/adapter -type f -maxdepth 2
+sha256sum train.jsonl > data.sha256
+python -m pip freeze > environment.txt</pre><h3>Serve with llama.cpp</h3><pre>llama-cli \
+  -m matching-base.gguf \
+  --lora role-lora.gguf</pre></div></div><div class="callout"><b>First-run defaults:</b> Qwen3-4B, 2,048 tokens, rank 16, alpha 16, batch 2, accumulation 4, one epoch, 90/10 split. If OOM: batch 1, then 1,024 tokens. If quality fails: inspect data before increasing rank or epochs.</div><div class="footer"><span>LoRA with Unsloth</span><span>18</span></div></section>
+<section class="page tight"><div class="label">References</div><h2>Sources and further reading</h2><p class="lede">Product APIs and quotas change. Recheck the current documentation before pinning an environment or budgeting a long run.</p><ol>
+<li><b>Hugging Face PEFT, LoRA conceptual guide.</b> Parameters, target modules, scaling, and adapter behavior.<br><a href="https://huggingface.co/docs/peft/main/conceptual_guides/lora">https://huggingface.co/docs/peft/main/conceptual_guides/lora</a></li>
+<li><b>Hugging Face course, LoRA configuration.</b> Practical rank, alpha, dropout, and target-module discussion.<br><a href="https://huggingface.co/docs/course/chapter11/4">https://huggingface.co/docs/course/chapter11/4</a></li>
+<li><b>Unsloth Qwen3 model collection.</b> Published Qwen3 variants and quantized checkpoints.<br><a href="https://huggingface.co/collections/unsloth/qwen3">https://huggingface.co/collections/unsloth/qwen3</a></li>
+<li><b>Unsloth Qwen3-4B Instruct 2507, 4-bit checkpoint.</b> Exact model used in the guide's default command.<br><a href="https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit">https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit</a></li>
+<li><b>Qwen3-4B model card.</b> Model size, architecture details, and context information.<br><a href="https://huggingface.co/Qwen/Qwen3-4B">https://huggingface.co/Qwen/Qwen3-4B</a></li>
+<li><b>vLLM, using LoRA adapters.</b> Serving adapters with <code>--enable-lora</code> and <code>--lora-modules</code>.<br><a href="https://docs.vllm.ai/en/v0.5.2/models/lora.html">https://docs.vllm.ai/en/v0.5.2/models/lora.html</a></li>
+<li><b>llama.cpp, GGUF LoRA example.</b> Loading a base model and adapter with <code>--lora</code>.<br><a href="https://github.com/ggml-org/llama.cpp/discussions/10123">https://github.com/ggml-org/llama.cpp/discussions/10123</a></li>
+<li><b>llama.cpp, PEFT-to-GGUF conversion change.</b> Current converter behavior and an example command.<br><a href="https://github.com/ggml-org/llama.cpp/pull/10110">https://github.com/ggml-org/llama.cpp/pull/10110</a></li>
+</ol><div class="footer"><span>LoRA with Unsloth</span><span>19</span></div></section>
+<section class="page tight"><div class="label">References</div><h2>Kaggle operations and practical hardware notes</h2><ol start="9">
+<li><b>Kaggle CLI workflow reference.</b> Kernel initialization, push, status, and output retrieval.<br><a href="https://github.com/mederic-hurier-partner/dotfiles/blob/HEAD/skills/kaggle/SKILL.md">https://github.com/mederic-hurier-partner/dotfiles/blob/HEAD/skills/kaggle/SKILL.md</a></li>
+<li><b>Kaggle notebook CLI example.</b> Legacy <code>kaggle.json</code> location, permissions, kernel push, and GPU metadata.<br><a href="https://github.com/hikarusadashi/kaggle-notebooks">https://github.com/hikarusadashi/kaggle-notebooks</a></li>
+<li><b>Kaggle integration field notes.</b> Approximate free-tier GPU quota and session assumptions, with the warning that limits can change.<br><a href="https://github.com/tayloramareltech/gemma4_comp/blob/HEAD/docs/kaggle_integration.md">https://github.com/tayloramareltech/gemma4_comp/blob/HEAD/docs/kaggle_integration.md</a></li>
+<li><b>RTX 3060 Qwen3-8B field guide.</b> A practical 12 GB Unsloth configuration and memory estimates, used only as a starting point to verify locally.<br><a href="https://github.com/millerrc18/halcyon-lab/blob/HEAD/docs/research/Fine-Tuning_Qwen3_8B_RTX_3060_March_2026_Guide.md">https://github.com/millerrc18/halcyon-lab/blob/HEAD/docs/research/Fine-Tuning_Qwen3_8B_RTX_3060_March_2026_Guide.md</a></li>
+</ol><div class="callout warn"><b>Source hierarchy:</b> model cards and library documentation establish interfaces. Community field notes establish practical starting points, not guarantees. Verify the current package help and Kaggle account limits before each run.</div><h3>Adapter manifest fields to keep</h3><pre>{
+  "base_model": "exact repository and revision",
+  "dataset_sha256": "...",
+  "chat_template": "tokenizer-defined",
+  "rank": 16,
+  "alpha": 16,
+  "max_seq_length": 2048,
+  "seed": 3407,
+  "training_backend": "kaggle-t4 or local-rtx3060",
+  "evaluation_report": "path or URL"
+}</pre><div class="footer"><span>LoRA with Unsloth</span><span>20</span></div></section>
+</body></html>

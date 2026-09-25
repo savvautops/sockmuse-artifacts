@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopping List — Tech & 3D Printing</title>
+<style>
+  :root { --bg:#fff; --fg:#111; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --card:#f9fafb; --danger:#dc2626; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#111214; --fg:#e5e7eb; --muted:#9ca3af; --line:#2a2d31; --accent:#60a5fa; --card:#1a1c1f; --danger:#f87171; }
+  }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); margin:0; padding:16px; max-width:720px; margin-inline:auto; }
+  h1 { font-size:1.4rem; margin:4px 0 12px; }
+  .toolbar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--fg); border-radius:8px; padding:6px 12px; }
+  button:hover { border-color:var(--accent); }
+  button.danger { color:var(--danger); }
+  button.small { padding:2px 8px; font-size:.8rem; }
+  h2 { font-size:1.05rem; margin:20px 0 8px; display:flex; align-items:center; justify-content:space-between; }
+  ul { list-style:none; margin:0; padding:0; }
+  li.item { border:1px solid var(--line); border-radius:10px; margin-bottom:6px; background:var(--card); }
+  .row { display:flex; align-items:center; gap:8px; padding:10px 12px; }
+  .row input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); flex-shrink:0; }
+  .name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .name.done { text-decoration:line-through; color:var(--muted); }
+  .price { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+  .chev { border:none; background:none; font-size:1rem; color:var(--muted); padding:4px 8px; }
+  .details { display:none; border-top:1px solid var(--line); padding:10px 12px; font-size:.9rem; color:var(--muted); }
+  li.item.open .details { display:block; }
+  .details a { color:var(--accent); word-break:break-all; }
+  .details p { margin:6px 0; }
+  .actions { display:flex; gap:6px; margin-top:8px; }
+  .editform { display:none; border-top:1px solid var(--line); padding:10px 12px; }
+  li.item.editing .editform { display:block; }
+  li.item.editing .details { display:none; }
+  .editform label { display:block; font-size:.8rem; color:var(--muted); margin:8px 0 2px; }
+  .editform input, .editform textarea { width:100%; font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }
+  .editform textarea { min-height:64px; resize:vertical; }
+  #archived { margin-top:24px; }
+  #archived ul .name { color:var(--muted); }
+  .empty { color:var(--muted); font-size:.9rem; padding:8px 0; }
+  .addform { display:none; padding:10px 12px; border:1px dashed var(--line); border-radius:10px; margin-bottom:6px; }
+  .addform.show { display:block; }
+  .addform input { width:100%; font:inherit; padding:6px 8px; margin-bottom:6px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }
+</style>
+</head>
+<body>
+<h1>🛒 Tech & 3D Printing</h1>
+<div class="toolbar">
+  <button id="archiveDone">Archive checked</button>
+  <button id="resetList" class="danger">Reset list</button>
+</div>
+<div id="list"></div>
+<div id="archived">
+  <h2>Archived <span id="archCount"></span></h2>
+  <ul id="archList"></ul>
+</div>
+
+<script>
+const KEY = "shoppinglist-v1";
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const DEFAULTS = [
+  { name:"NFC & Electronics", items:[
+    { name:"NTAG215 stickers (25–50 pk)", notes:"Embed in prints, phone automation triggers." },
+    { name:"NTAG215 loose chips", notes:"For resin-cast or printed enclosures." },
+    { name:"DESFire EV2 cards (5 pk)", notes:"Real AES mutual auth for door/access projects." },
+  ]},
+  { name:"DIY FIDO2 Key", items:[
+    { name:"nRF52840 USB dongle", price:"$18–56", notes:"makerdiary MDK or Nordic PCA10059. Flash OpenSK firmware for a working FIDO2 key.",
+      links:[["Amazon — GeeekPi MDK w/case ($56.16)","https://www.amazon.ca/GeeekPi-nRF52840-Dongle-Development-Platform/dp/B0D5YKKBMZ/"],
+             ["DigiKey — genuine Nordic PCA10059 ($18.26)","https://www.digikey.ca/en/products/detail/nordic-semiconductor-asa/NRF52840-DONGLE/9491124"]] },
+    { name:"OpenSK firmware / guide", notes:"Prebuilt UF2 images + guided installer. Research-grade: no secure element, fine for learning.",
+      links:[["opensk-supermini (prebuilt images)","https://github.com/jonpage0/opensk-supermini"]] },
+    { name:"Printed case for the key", notes:"Google provides a 3D-printable case design for OpenSK builds." },
+  ]},
+  { name:"Magnets & Hardware", items:[
+    { name:"Neodymium discs variety (6/8/10×3mm)", notes:"Snap-fit enclosures, mounts, fridge holders." },
+    { name:"Heat-set inserts M3 (100 pk) + iron tip", notes:"Essential for functional prints." },
+    { name:"M3 screw assortment (hex socket)" },
+  ]},
+  { name:"Filament", items:[
+    { name:"PLA 1.75mm ×2", notes:"eSUN / Overture. Black + a color." },
+    { name:"PETG 1.75mm ×1", notes:"Functional parts, better heat resistance." },
+    { name:"TPU 95A ×1", notes:"Flexible: feet, cases, gaskets." },
+  ]},
+  { name:"Nozzles & Hotend", items:[
+    { name:"Brass nozzle set (0.2/0.4/0.6/0.8mm)" },
+    { name:"Hardened steel nozzle 0.4mm", notes:"For glow, carbon-fiber, or other abrasive filaments." },
+    { name:"Capricorn PTFE tube 1m + cutter" },
+    { name:"Cleaning needles + brass brush" },
+  ]},
+  { name:"Bed & Adhesion", items:[
+    { name:"PEI spring steel plate", notes:"Check your printer's bed size first." },
+    { name:"Magigoo or glue sticks" },
+    { name:"IPA 99%", notes:"Bed cleaning." },
+  ]},
+  { name:"Tools", items:[
+    { name:"Digital calipers 150mm", notes:"Non-negotiable. Measure everything." },
+    { name:"Flush cutters" },
+    { name:"Deburring tool" },
+    { name:"Heat gun", notes:"Stringing cleanup." },
+    { name:"Precision knife set" },
+  ]},
+  { name:"Cloud & VPS", items:[
+    { name:"Hetzner CX22 cloud server", price:"~$5–6/mo", notes:"2 vCPU / 4GB RAM / 40GB NVMe / 20TB traffic (EU). IPv4 ~$0.60/mo extra. Best value VPS at this tier; US regions only 1TB included.",
+      links:[["Best cheap VPS providers roundup","https://computingforgeeks.com/best-cheap-vps-hosting-providers/"]] },
+  ]},
+  { name:"Sleep", items:[
+    { name:"Melatonin 1mg", notes:"Start low. 30–60 min before bed. Helps with sleep onset." },
+    { name:"Magnesium glycinate", notes:"Mild. Doubles as muscle recovery for training days." },
+  ]},
+];
+
+function seed() {
+  return {
+    cats: DEFAULTS.map(c => ({ id:uid(), name:c.name,
+      items:c.items.map(i => ({ id:uid(), name:i.name, price:i.price||"", notes:i.notes||"", links:i.links||[], done:false })) })),
+    archived: []
+  };
+}
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); }
+catch { state = seed(); }
+
+// 2026-09-24: ensure the "Cloud & VPS" category exists in existing saved lists
+(function migrate() {
+  let cat = state.cats.find(c => c.name === "Cloud & VPS");
+  if (!cat) { cat = { id:uid(), name:"Cloud & VPS", items:[] }; state.cats.push(cat); }
+  const seedItems = [
+    { name:"Hetzner CX22 cloud server", price:"~$5–6/mo",
+      notes:"2 vCPU / 4GB RAM / 40GB NVMe / 20TB traffic (EU). IPv4 ~$0.60/mo extra. Best value VPS at this tier; US regions only 1TB included.",
+      links:[["Best cheap VPS providers roundup","https://computingforgeeks.com/best-cheap-vps-hosting-providers/"]] },
+  ];
+  seedItems.forEach(s => {
+    if (!cat.items.some(i => i.name === s.name)) cat.items.push({ id:uid(), done:false, ...s });
+  });
+})();
+const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+
+function itemDetails(it) {
+  let h = "";
+  if (it.notes) h += `<p>${esc(it.notes)}</p>`;
+  (it.links||[]).forEach(([label,url]) => { h += `<p><a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a></p>`; });
+  if (!h) h = `<p>No extra info.</p>`;
+  h += `<div class="actions">
+    <button class="small" data-act="edit">Edit</button>
+    <button class="small danger" data-act="del">Delete</button>
+  </div>`;
+  return h;
+}
+function editForm(it) {
+  const linksTxt = (it.links||[]).map(([l,u]) => `${l} | ${u}`).join("\n");
+  return `<label>Name</label><input data-f="name" value="${esc(it.name)}">
+  <label>Price</label><input data-f="price" value="${esc(it.price)}" placeholder="$0.00">
+  <label>Notes</label><textarea data-f="notes">${esc(it.notes)}</textarea>
+  <label>Links (one per line: label | url)</label><textarea data-f="links">${esc(linksTxt)}</textarea>
+  <div class="actions"><button class="small" data-act="save">Save</button><button class="small" data-act="cancel">Cancel</button></div>`;
+}
+
+function render() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  state.cats.forEach(cat => {
+    const h = document.createElement("h2");
+    h.innerHTML = `<span>${esc(cat.name)}</span>`;
+    const addBtn = document.createElement("button");
+    addBtn.className = "small"; addBtn.textContent = "+ Add";
+    addBtn.onclick = () => { const f = document.getElementById("add-"+cat.id); f.classList.toggle("show"); };
+    h.appendChild(addBtn);
+    list.appendChild(h);
+
+    const ul = document.createElement("ul");
+    if (!cat.items.length) { const e=document.createElement("div"); e.className="empty"; e.textContent="Nothing here."; ul.appendChild(e); }
+    cat.items.forEach(it => {
+      const li = document.createElement("li");
+      li.className = "item" + (it.open ? " open" : "") + (it.editing ? " editing" : "");
+      li.dataset.id = it.id;
+      const hasInfo = it.notes || (it.links||[]).length;
+      li.innerHTML = `<div class="row">
+          <input type="checkbox" ${it.done?"checked":""}>
+          <span class="name ${it.done?"done":""}">${esc(it.name)}</span>
+          ${it.price?`<span class="price">${esc(it.price)}</span>`:""}
+          <button class="chev" data-act="toggle" title="More info">${hasInfo||it.open?"▾":"▸"}</button>
+        </div>
+        <div class="details">${itemDetails(it)}</div>
+        <div class="editform">${editForm(it)}</div>`;
+      ul.appendChild(li);
+    });
+    list.appendChild(ul);
+
+    const af = document.createElement("div");
+    af.className = "addform"; af.id = "add-"+cat.id;
+    af.innerHTML = `<input data-f="name" placeholder="Item name">
+      <input data-f="price" placeholder="Price (optional)">
+      <div class="actions"><button class="small" data-act="addsave">Add</button><button class="small" data-act="addcancel">Cancel</button></div>`;
+    af.dataset.cat = cat.id;
+    list.appendChild(af);
+  });
+
+  const al = document.getElementById("archList");
+  al.innerHTML = "";
+  document.getElementById("archCount").textContent = state.archived.length ? `(${state.archived.length})` : "";
+  state.archived.forEach(it => {
+    const li = document.createElement("li");
+    li.className = "item"; li.dataset.id = it.id;
+    li.innerHTML = `<div class="row"><span class="name">${esc(it.name)}</span><span class="price">${esc(it.price||"")}</span>
+      <span class="actions" style="margin:0"><button class="small" data-act="restore">Restore</button><button class="small danger" data-act="purge">Delete</button></span></div>`;
+    al.appendChild(li);
+  });
+  save();
+}
+
+function findItem(id) {
+  for (const cat of state.cats) {
+    const it = cat.items.find(i => i.id === id);
+    if (it) return { cat, it };
+  }
+  return {};
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-act]");
+  if (btn) {
+    const li = btn.closest("li.item, div.addform");
+    const act = btn.dataset.act;
+    if (act === "toggle") { const {it} = findItem(li.dataset.id); it.open = !it.open; }
+    else if (act === "edit") { const {it} = findItem(li.dataset.id); it.editing = true; it.open = false; }
+    else if (act === "cancel") { const {it} = findItem(li.dataset.id); it.editing = false; }
+    else if (act === "del") { if (confirm("Delete this item?")) { const {cat,it} = findItem(li.dataset.id); cat.items = cat.items.filter(i => i!==it); } }
+    else if (act === "save") {
+      const {it} = findItem(li.dataset.id);
+      it.name = li.querySelector('[data-f=name]').value.trim() || it.name;
+      it.price = li.querySelector('[data-f=price]').value.trim();
+      it.notes = li.querySelector('[data-f=notes]').value.trim();
+      it.links = li.querySelector('[data-f=links]').value.split("\n").map(s=>s.trim()).filter(Boolean)
+        .map(s => { const p = s.split("|").map(x=>x.trim()); return [p[0]||p[1]||"", p[1]||p[0]||""]; })
+        .filter(([l,u]) => u);
+      it.editing = false;
+    }
+    else if (act === "addsave") {
+      const cat = state.cats.find(c => c.id === li.dataset.cat);
+      const name = li.querySelector('[data-f=name]').value.trim();
+      if (name) cat.items.push({ id:uid(), name, price:li.querySelector('[data-f=price]').value.trim(), notes:"", links:[], done:false });
+      li.classList.remove("show");
+    }
+    else if (act === "addcancel") { li.classList.remove("show"); }
+    else if (act === "restore") {
+      const ix = state.archived.findIndex(i => i.id === li.dataset.id);
+      const [it] = state.archived.splice(ix,1); it.done = false;
+      state.cats[0].items.push(it);
+    }
+    else if (act === "purge") { if (confirm("Delete permanently?")) state.archived = state.archived.filter(i => i.id !== li.dataset.id); }
+    render(); return;
+  }
+  if (e.target.id === "archiveDone") {
+    state.cats.forEach(cat => {
+      const done = cat.items.filter(i => i.done);
+      state.archived.push(...done);
+      cat.items = cat.items.filter(i => !i.done);
+    });
+    render();
+  }
+  if (e.target.id === "resetList") {
+    if (confirm("Reset the whole list to defaults?")) { state = seed(); render(); }
+  }
+});
+
+document.addEventListener("change", e => {
+  const cb = e.target.closest('input[type=checkbox]');
+  if (cb) { const {it} = findItem(cb.closest("li.item").dataset.id); it.done = cb.checked; render(); }
+});
+
+render();
+</script>
+</body>
+</html>
